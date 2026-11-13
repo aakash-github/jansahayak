@@ -6,7 +6,7 @@ Status: ⏳ not started · 🚧 in progress · ✅ done
 
 ---
 
-## 1. User experience: fewer questions before the first answer ⏳
+## 1. User experience: fewer questions before the first answer 🚧 (A, B, C done; D, E open)
 
 **Problem.** The bot has a fixed checklist per user type (farmer: state → land → age; student: income → course → category; business: age → business type → state). It won't show any scheme until every item is answered, and asks one item per message. That makes about 3 round trips (~6 s each) before the user sees anything. On voice it's worse, because every question is read aloud.
 
@@ -14,9 +14,9 @@ Status: ⏳ not started · 🚧 in progress · ✅ done
 
 | | Change | Where | Effort |
 |---|---|---|---|
-| **A** | **Answer first, then improve.** Only "farmer / student / business?" blocks. After that, show schemes immediately with what we know. Unknown details show as "Need more info" on the cards. | `backend/app/agents.py` (`route_after_intake`) | ~30 min |
-| **B** | **At most one question per reply, and only the one that matters most.** Ask about whichever unknown field appears in the most shown schemes' rules (e.g. `category` for students), not a fixed order. If no unknown field would change the results, ask nothing. | `agents.py` + `eligibility.py` | ~30 min |
-| **C** | **Tap-to-answer buttons** under the question: age `[18–40] [41–60] [60+] [Skip]`, category `[General] [OBC] [SC] [ST] [EWS]`, state = common states + "Other". Backend returns `followup_field` + `options`; frontend renders chips. | `main.py`, `agents.py`, `frontend/src/App.jsx` | ~1 h |
+| **A** ✅ | **Answer first, then improve.** Only "farmer / student / business?" blocks. After that, show schemes immediately with what we know. Unknown details show as "Need more info" on the cards. | `backend/app/agents.py` (`route_after_intake`) | ~30 min |
+| **B** ✅ | **At most one question per reply, and only the one that matters most.** Ask about whichever unknown field appears in the most shown schemes' rules (e.g. `category` for students), not a fixed order. If no unknown field would change the results, ask nothing. | `agents.py` + `eligibility.py` | ~30 min |
+| **C** ✅ | **Tap-to-answer buttons** under the question: age `[18–40] [41–60] [60+] [Skip]`, category `[General] [OBC] [SC] [ST] [EWS]`, state = common states + "Other". Backend returns `followup_field` + `options`; frontend renders chips. | `main.py`, `agents.py`, `frontend/src/App.jsx` | ~1 h |
 | **D** | **Hint up front:** welcome screen says *"Tip: say everything at once, e.g. 'Farmer in Bihar, 2 acres, age 35'"*. The bot already understands several details in one message. | `App.jsx` | 10 min |
 | **E** | **Editable "Your details" panel:** tap a value to change it (e.g. 5 acres → 2) and the results refresh without chatting again. Needs a small `/api/profile` endpoint. | `main.py`, `App.jsx` | ~1 h |
 
@@ -93,3 +93,4 @@ Mock-up after A + B + C:
 - Ask age (farmers), category (students), state (business); yes/no scheme facts extracted from chat
 - Fixed Render out-of-memory crash (reranker batching)
 - Mobile: single mic (no 🎤 in the placeholder)
+- UX A + B + C: answer first, one smart follow-up question, tap-to-answer buttons (`backend/app/followups.py`)

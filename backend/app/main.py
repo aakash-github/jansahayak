@@ -23,6 +23,7 @@ SESSIONS: dict[str, dict] = {}  # in-memory, cleared on reset/restart (no PII st
 class ChatIn(BaseModel):
     session_id: str | None = None
     message: str
+    set: dict | None = None  # values from a tapped answer button, e.g. {"category": "sc"}
 
 
 @app.get("/health")
@@ -34,21 +35,29 @@ def health():
 @app.post("/api/chat")
 async def chat(body: ChatIn):
     sid = body.session_id or str(uuid.uuid4())
-    sess = SESSIONS.setdefault(sid, {"profile": {}, "asked": [], "lang": "en"})
+    sess = SESSIONS.setdefault(sid, {"profile": {}, "asked": [], "lang": "en", "labels": {}})
+    if body.set:  # remember the button text so the details panel shows "Up to ₹2.5 lakh", not "250000"
+        for k, v in body.set.items():
+            sess["labels"][k] = [v, body.message[:60]]
     try:
-        out = await GRAPH.ainvoke({"message": body.message[:1000], "profile": sess["profile"],
+        out = await GRAPH.ainvoke({"message": body.message[:1000], "profile": sess["profile"], "preset": body.set,
                                    "asked": sess["asked"], "lang": sess["lang"], "steps": 0})
     except Exception as e:
         return {"session_id": sid, "message": f"Sorry, the AI service is busy right now ({type(e).__name__}). Please try again.",
-                "profile": sess["profile"], "schemes": [], "sources": [], "needs_followup": False, "data_as_of": DATA_AS_OF}
+                "profile": sess["profile"], "profile_labels": {}, "schemes": [], "sources": [], "followup": None,
+                "needs_followup": False, "data_as_of": DATA_AS_OF}
     sess["profile"], sess["asked"] = out.get("profile", {}), out.get("asked", sess["asked"])
     sess["lang"] = out.get("lang", sess["lang"])
+    blocking = bool(out.get("blocking"))
+    labels = {k: lab for k, (v, lab) in sess["labels"].items() if sess["profile"].get(k) == v}  # drop stale labels
     return {
         "session_id": sid,
         "message": out.get("answer", ""),
         "profile": sess["profile"],
-        "needs_followup": bool(out.get("followup")),
-        "schemes": out.get("results", []) if not out.get("followup") else [],
+        "profile_labels": labels,
+        "followup": out.get("followup"),   # {field, question, helps, input, options:[{label, set}]} or null
+        "needs_followup": blocking,        # True = no schemes yet, we must know the user group first
+        "schemes": [] if blocking else out.get("results", []),
         "sources": [{"id": f"S{i+1}", "scheme_id": c["scheme_id"], "title": c["title"], "section": c["section"],
                      "url": c["source_url"], "page": c.get("page")} for i, c in enumerate(out.get("evidence", []))],
         "data_as_of": DATA_AS_OF,

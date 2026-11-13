@@ -123,3 +123,19 @@ summary { cursor: pointer; font-weight: 500; }
 .via { align-self: flex-end; color: var(--muted); font-size: 12px; }
 .mic-error { background: var(--bad-bg); color: var(--bad); border-radius: 10px; padding: 8px 12px; font-size: 14px; cursor: pointer; margin-top: 8px; }
 @media (max-width: 480px) { .lang { width: 42px; } .composer button { width: 46px; } .composer input { padding: 12px 14px; } }
+
+/* smart follow-up question with tap-to-answer buttons */
+.followup { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--saffron); border-radius: 14px;
+  padding: 12px 14px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; max-width: 640px; }
+.followup.blocking { border-left-color: var(--blue); }
+.followup p { margin: 0; font-size: 15px; }
+.followup p small { color: var(--muted); }
+.followup .chip.opt { border-color: var(--saffron); color: var(--saffron); font-weight: 500; }
+.followup .chip.opt:hover { background: var(--saffron); color: #fff; }
+.followup select { padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--fg);
+  font: inherit; max-width: 320px; }
+.fu-foot { display: flex; align-items: center; gap: 12px; }
+.fu-foot:empty { display: none; }
+.fu-foot small { color: var(--muted); }
+.fu-foot .skip { margin-left: auto; background: transparent; border: none; color: var(--muted); text-decoration: underline; font-size: 13px; cursor: pointer; }
+@media (max-width: 640px) { .followup { max-width: 100%; } .followup select { max-width: 100%; } }

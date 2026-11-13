@@ -50,13 +50,14 @@ When a user sends a message, it goes through these steps (called **agents** or *
 flowchart TD
   M["User message"] --> I["1️⃣ Intake agent 🧠<br/>understand the user"]
   I -->|"not about schemes"| R["Polite refusal"]
-  I -->|"key detail missing"| Q["2️⃣ Ask one follow-up question"]
-  I -->|"enough details"| P["3️⃣ Planner"]
+  I -->|"don't know farmer / student / business yet"| Q["2️⃣ Ask that one question<br/>(with buttons)"]
+  I -->|"otherwise: always answer"| P["3️⃣ Planner"]
   P --> E["4️⃣ Executor: runs 4 tools"]
   E --> W["5️⃣ Answer agent 🧠<br/>write the reply"]
   W --> C{"6️⃣ Critic<br/>is the reply safe?"}
   C -->|"problem found"| W
-  C -->|"OK"| OUT["Send to screen"]
+  C -->|"OK"| S["7️⃣ Suggest: pick at most ONE<br/>follow-up question + buttons"]
+  S --> OUT["Send to screen"]
 ```
 
 🧠 = uses the AI model. **Only 2 of the steps use AI.** The rest is plain Python code: fast, free and predictable. That also matters because our API key allows only **one AI request at a time**.
@@ -64,11 +65,12 @@ flowchart TD
 | # | Step | Uses AI? | What it does in one line |
 |---|---|---|---|
 | 1 | **Intake** | ✅ | Reads the message and fills a profile, e.g. `{occupation: farmer, state: Bihar, land_acres: 1}` |
-| 2 | **Follow-up** | ❌ | If an important detail is missing, asks for it, one question at a time. User can say "skip". Yes/no facts like "women SHG member" or "admitted to IIT" are picked up only if the user mentions them. |
+| 2 | **Ask** | ❌ | Only if we don't know whether the user is a farmer, student or business owner. This is the **only** question that holds back results. |
 | 3 | **Planner** | ❌ | Decides the order of tools. Today this is a fixed plan (always the same 4 tools). |
 | 4 | **Executor** | ❌ | Runs the 4 tools (below) |
 | 5 | **Answer** | ✅ | Turns tool results into a short, friendly reply with citations `[S1]` |
 | 6 | **Critic** | ❌ | Checks the reply. If it is wrong, sends it back to step 5 (max 10 steps in total). |
+| 7 | **Suggest** | ❌ | Looks at the schemes just shown. If some say "Need more info", picks the **one** detail that would settle the most of them and shows it as a question with tap buttons. If nothing would change, asks nothing. |
 
 **The 4 tools the executor runs:**
 
@@ -79,16 +81,19 @@ flowchart TD
 | 📄 Document checklist | Lists documents to keep ready | `eligibility.py` |
 | 🔗 Official link | Gives the official site to apply/confirm | `eligibility.py` |
 
-**What details are "important" before searching:**
+**"Answer first, then improve" (how follow-up questions work):**
 
-| User type | We ask for |
-|---|---|
-| Farmer | state, land (acres), age |
-| Student | family income, course, category (General/OBC/SC/ST/EWS) |
-| Business | age, business type, state |
-| Unknown | farmer, student or business? |
+1. As soon as we know the user group, we show schemes, even with missing details. Missing details show as "?" on the cards.
+2. Under the reply we show **at most one** question, chosen like this:
+   - count, for each unknown detail, how many of the shown "Need more info" schemes it would settle
+   - pick the biggest count; if tied, the one that helps the top card; then easier questions first
+   - never ask the same thing twice in a chat
+3. Each question has **tap buttons**. Tapping sends the value straight to the backend (no AI call, so it's faster and can't be misread). Number answers use ranges whose edges match the scheme limits, e.g. income `Up to ₹2.5 lakh / ₹2.5–3.5 / ₹3.5–4.5 / ₹4.5–8 / more than ₹8 lakh`. Long lists (states) use a dropdown. Users can still type, or tap **Skip**.
+4. Telling everything in one message (e.g. *"Farmer in Bihar, 2 acres, age 30"*) usually means no question at all.
 
-Code: `backend/app/agents.py`
+Example: a student taps 🎓 Student → 5 scholarships shown, question "family income?" (it settles all 5) → taps "Up to ₹2.5 lakh" → question "category?" → taps SC → Top Class SC moves to the top.
+
+Code: `backend/app/agents.py` (flow), `backend/app/followups.py` (questions, buttons, picking logic)
 
 ---
 

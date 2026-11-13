@@ -63,6 +63,31 @@ function Bubble({ text }) {
   )
 }
 
+const isHindi = (t) => /[ऀ-ॿ]/.test(t || '')
+
+/** One smart follow-up question with tap-to-answer buttons (or a dropdown for long lists like states). */
+function FollowUp({ f, blocking, onPick, onSkip }) {
+  const hi = isHindi(f.question)
+  const helps = f.helps > 0 && (hi ? `इससे ${f.helps} और योजना की जाँच होगी` : `checks ${f.helps} more scheme${f.helps > 1 ? 's' : ''}`)
+  return (
+    <div className={`followup ${blocking ? 'blocking' : ''}`}>
+      {!blocking && <p>💡 <b>{f.question}</b>{helps && <small> · {helps}</small>}</p>}
+      {f.options.length > 8 ? (
+        <select defaultValue="" onChange={(e) => e.target.value !== '' && onPick(f.options[e.target.value])}>
+          <option value="" disabled>{hi ? 'चुनें…' : 'Choose…'}</option>
+          {f.options.map((o, i) => <option key={o.label} value={i}>{o.label}</option>)}
+        </select>
+      ) : (
+        <div className="chips">{f.options.map((o) => <button key={o.label} className="chip opt" onClick={() => onPick(o)}>{o.label}</button>)}</div>
+      )}
+      <div className="fu-foot">
+        {f.input && <small>{hi ? (f.options.length ? 'या नीचे लिखें' : 'नीचे लिखें') : (f.options.length ? 'or type it below' : 'Type it in the box below')}</small>}
+        {!blocking && <button className="skip" onClick={onSkip}>{hi ? 'छोड़ें' : 'Skip'}</button>}
+      </div>
+    </div>
+  )
+}
+
 function SchemeCard({ s }) {
   const st = STATUS[s.status]
   return (
@@ -88,6 +113,8 @@ export default function App() {
   const [sid, setSid] = useState(null)
   const [msgs, setMsgs] = useState([])
   const [profile, setProfile] = useState({})
+  const [labels, setLabels] = useState({}) // button text for tapped answers, e.g. "Up to ₹2.5 lakh"
+  const [skipped, setSkipped] = useState(-1) // index of the bot message whose follow-up was skipped
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [slow, setSlow] = useState(false)
@@ -95,6 +122,7 @@ export default function App() {
   const [speaking, setSpeaking] = useState(null) // index of message being read aloud
   const viaVoice = useRef(false)
   const end = useRef(null)
+  const inputRef = useRef(null)
   const mic = useListener({ lang, onFinal: (t) => { viaVoice.current = true; send(t) } })
 
   useEffect(() => { end.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs, busy])
@@ -103,11 +131,12 @@ export default function App() {
     if (!canSpeak) return
     if (speaking === i) { stopSpeaking(); setSpeaking(null); return }
     setSpeaking(i)
-    const hindi = /[ऀ-ॿ]/.test(text) // Devanagari -> Hindi voice
+    const hindi = isHindi(text) // Devanagari -> Hindi voice
     speak(text, { lang: hindi ? 'hi-IN' : 'en-IN', onEnd: () => setSpeaking((s) => (s === i ? null : s)) })
   }
 
-  async function send(text) {
+  // `set` comes from a tapped answer button: the backend stores it directly (faster, no AI guess)
+  async function send(text, set = null) {
     if (!text.trim() || busy) return
     const voice = viaVoice.current
     viaVoice.current = false
@@ -117,16 +146,22 @@ export default function App() {
     setInput(''); setBusy(true); setSlow(false)
     const timer = setTimeout(() => setSlow(true), 8000)
     try {
-      const r = await sendMessage(sid, text)
-      setSid(r.session_id); setProfile(r.profile || {})
-      setMsgs((m) => [...m, { role: 'bot', text: r.message, schemes: r.schemes, sources: r.sources, asOf: r.data_as_of, followup: r.needs_followup }])
-      if (voice) readAloud(botIndex, r.message) // asked by voice -> answer by voice
+      const r = await sendMessage(sid, text, set)
+      setSid(r.session_id); setProfile(r.profile || {}); setLabels(r.profile_labels || {})
+      const bot = { role: 'bot', text: r.message, schemes: r.schemes, sources: r.sources, asOf: r.data_as_of, followup: r.followup, blocking: r.needs_followup }
+      setMsgs((m) => [...m, bot])
+      if (voice) readAloud(botIndex, spoken(bot)) // asked by voice -> answer by voice
+      if (r.followup?.input && !r.followup.options.length) setTimeout(() => inputRef.current?.focus(), 50)
     } catch {
       setMsgs((m) => [...m, { role: 'bot', text: 'I could not reach the server. It may be waking up, so please try again in a minute.' }])
     } finally { clearTimeout(timer); setBusy(false) }
   }
-  async function reset() { stopSpeaking(); setSpeaking(null); await resetSession(sid); setSid(null); setMsgs([]); setProfile({}) }
+  async function reset() { stopSpeaking(); setSpeaking(null); await resetSession(sid); setSid(null); setMsgs([]); setProfile({}); setLabels({}) }
+  // read the follow-up question aloud too (unless the reply already is that question)
+  const spoken = (m) => (m.followup && !m.blocking ? `${m.text} ${m.followup.question}` : m.text)
   const last = msgs[msgs.length - 1]
+  const lastIdx = msgs.length - 1
+  const activeFollowup = !busy && last?.role === 'bot' && last.followup && skipped !== lastIdx ? last.followup : null
 
   return (
     <div className="page">
@@ -153,7 +188,7 @@ export default function App() {
               <h2>Who are you looking for support as?</h2>
               <div className="groups">
                 {GROUPS.map((g) => (
-                  <button key={g.key} className={`group ${g.tone}`} onClick={() => send(g.text)}>
+                  <button key={g.key} className={`group ${g.tone}`} onClick={() => send(g.text, { occupation: g.key })}>
                     <span className="gicon">{g.icon}</span><b>{g.title}</b><small>{g.desc}</small>
                   </button>
                 ))}
@@ -176,7 +211,7 @@ export default function App() {
                     <Bubble text={m.text} />
                     {m.role === 'user' && m.voice && <small className="via">🎤 spoken</small>}
                     {m.role === 'bot' && canSpeak && (
-                      <button className={`listen ${speaking === i ? 'on' : ''}`} onClick={() => readAloud(i, m.text)}>
+                      <button className={`listen ${speaking === i ? 'on' : ''}`} onClick={() => readAloud(i, spoken(m))}>
                         {speaking === i ? '⏹ Stop' : '🔊 Listen'}
                       </button>
                     )}
@@ -196,7 +231,13 @@ export default function App() {
                   <div className="bubble typing"><i /><i /><i />{slow && <small>Waking up the server, this can take up to a minute…</small>}</div>
                 </div>
               )}
-              {!busy && last?.role === 'bot' && last.schemes?.length > 0 && (
+              {activeFollowup && (
+                <div className="follow">
+                  <FollowUp f={activeFollowup} blocking={last.blocking}
+                    onPick={(o) => send(o.label, o.set)} onSkip={() => setSkipped(lastIdx)} />
+                </div>
+              )}
+              {!busy && !activeFollowup && last?.role === 'bot' && last.schemes?.length > 0 && (
                 <div className="chips follow">{FOLLOWUPS.map((f) => <button key={f} className="chip" onClick={() => send(f)}>{f}</button>)}</div>
               )}
               <div ref={end} />
@@ -212,6 +253,7 @@ export default function App() {
               </button>
             )}
             <input
+              ref={inputRef}
               value={mic.listening ? mic.interim : input}
               onChange={(e) => setInput(e.target.value)}
               readOnly={mic.listening}
@@ -236,7 +278,7 @@ export default function App() {
             <h4>👤 Your details</h4>
             {Object.keys(profile).length === 0
               ? <p className="muted">Nothing yet. As you chat, the details we understand appear here.</p>
-              : <dl>{Object.entries(profile).map(([k, v]) => <div key={k}><dt>{LABELS[k] || k.replace('_', ' ')}</dt><dd>{fmt(k, v)}</dd></div>)}</dl>}
+              : <dl>{Object.entries(profile).map(([k, v]) => <div key={k}><dt>{LABELS[k] || k.replace('_', ' ')}</dt><dd>{labels[k] || fmt(k, v)}</dd></div>)}</dl>}
             <p className="muted small">Kept only for this session. “New chat” clears it.</p>
           </div>
           <div className="panel">

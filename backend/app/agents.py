@@ -1,4 +1,8 @@
-"""LangGraph workflow: intake -> (follow-up | planner) -> executor -> answer -> critic -> (answer | END).
+"""LangGraph workflow:
+intake -> (ask occupation | refuse | planner) -> executor -> answer -> critic -> (answer | suggest) -> END
+
+"Answer first, then improve": once we know farmer/student/business we always show schemes.
+The suggest step then offers at most ONE follow-up question (see followups.py).
 
 Only 2 LLM calls per turn (intake + answer) because the key allows 1 request at a time.
 Planner, executor (tools) and critic are deterministic Python, which is how we
@@ -9,7 +13,7 @@ from typing import TypedDict
 
 from langgraph.graph import END, StateGraph
 
-from . import eligibility, llm, retrieval
+from . import eligibility, followups, llm, retrieval
 
 MAX_STEPS = 10
 DATA_AS_OF = "2026-11-13"
@@ -18,21 +22,6 @@ FIELDS = ["occupation", "state", "age", "annual_income", "gender", "category",
           # yes/no facts some schemes need; only filled when the user mentions them
           "shg_member", "class12_top20", "class12_top1", "top_institution", "school_student",
           "swanath_category", "dpiit_recognised"]
-# Details we must have before searching (asked once each, user may skip).
-REQUIRED = {"farmer": ["state", "land_acres", "age"], "student": ["annual_income", "course", "category"],
-            "entrepreneur": ["age", "business_type", "state"], "": ["occupation"]}
-QUESTIONS = {
-    "occupation": "Are you a farmer, a student, or starting/running a business?",
-    "state": "Which state do you live in?",
-    "land_acres": "How much farmland do you cultivate (in acres)? You can say 'skip'.",
-    "annual_income": "Roughly what is your family's yearly income? (Many scholarships have an income limit. You can say 'skip'.)",
-    "course": "Which course are you studying (e.g. B.Tech, diploma, BA)?",
-    "age": "What is your age?",
-    "business_type": "What kind of business is it (e.g. manufacturing, tailoring, shop/service)?",
-    "category": "Which category do you belong to: General, OBC, SC, ST or EWS? (Many scholarships depend on it. You can say 'skip'.)",
-}
-
-
 class State(TypedDict, total=False):
     message: str
     lang: str  # 'en' or 'hi', sticky for the chat
@@ -40,7 +29,9 @@ class State(TypedDict, total=False):
     profile: dict
     asked: list
     intent: str
-    followup: str
+    preset: dict     # values from a tapped answer button: stored directly, no AI call
+    followup: dict   # the one question to show under the reply (or None)
+    blocking: bool   # True only for "farmer/student/business?" (no schemes shown yet)
     results: list
     evidence: list
     answer: str
@@ -87,8 +78,17 @@ def _mock_intake(text: str) -> dict:
     return {"intent": "find_schemes", "profile": p}
 
 
+def _clean(values: dict) -> dict:
+    """Keep only known fields with simple values (used for tapped answers)."""
+    return {k: v for k, v in (values or {}).items()
+            if k in FIELDS and isinstance(v, (bool, int, float, str)) and len(str(v)) <= 60}
+
+
 async def intake(s: State) -> State:
     profile = dict(s.get("profile") or {})
+    if s.get("preset") is not None:  # user tapped an answer button: no need to ask the AI
+        profile.update(_clean(s["preset"]))
+        return {"profile": profile, "lang": s.get("lang", "en"), "intent": "find_schemes", "steps": s.get("steps", 0) + 1}
     if llm.MOCK:
         out = _mock_intake(s["message"])
     else:
@@ -109,21 +109,12 @@ async def intake(s: State) -> State:
 def route_after_intake(s: State) -> str:
     if s["intent"] == "out_of_scope":
         return "refuse"
-    occ = (s["profile"].get("occupation") or "").lower()
-    missing = [f for f in REQUIRED.get(occ, REQUIRED[""]) if f not in s["profile"] and f not in s.get("asked", [])]
-    return "ask" if missing else "planner"
+    # The only question that blocks results: we need to know which group of schemes to look at.
+    if not s["profile"].get("occupation") and "occupation" not in s.get("asked", []):
+        return "ask"
+    return "planner"
 
 
-QUESTIONS_HI = {
-    "occupation": "क्या आप किसान हैं, छात्र हैं, या कोई व्यापार शुरू कर रहे हैं / चला रहे हैं?",
-    "state": "आप किस राज्य में रहते हैं?",
-    "land_acres": "आप कितनी ज़मीन पर खेती करते हैं (एकड़ में)? आप 'छोड़ें' भी कह सकते हैं।",
-    "annual_income": "आपके परिवार की सालाना आय लगभग कितनी है? (कई छात्रवृत्तियों में आय की सीमा होती है। आप 'छोड़ें' भी कह सकते हैं।)",
-    "course": "आप कौन सा कोर्स पढ़ रहे हैं (जैसे B.Tech, डिप्लोमा, BA)?",
-    "age": "आपकी उम्र क्या है?",
-    "business_type": "आपका व्यापार किस तरह का है (जैसे निर्माण/मैन्युफैक्चरिंग, सिलाई, दुकान/सेवा)?",
-    "category": "आप किस वर्ग से हैं: सामान्य, ओबीसी, एससी, एसटी या ईडब्ल्यूएस? (कई छात्रवृत्तियाँ इस पर निर्भर करती हैं। आप 'छोड़ें' भी कह सकते हैं।)",
-}
 FIXED = {
     "refuse": {
         "en": "I can only help with finding Indian government schemes for farmers, students and entrepreneurs. "
@@ -150,10 +141,18 @@ def detect_lang(text: str, previous: str = "en") -> str:
 
 
 def ask(s: State) -> State:
-    occ = (s["profile"].get("occupation") or "").lower()
-    field = next(f for f in REQUIRED.get(occ, REQUIRED[""]) if f not in s["profile"] and f not in s.get("asked", []))
-    q = (QUESTIONS_HI if s.get("lang") == "hi" else QUESTIONS)[field]
-    return {"followup": q, "asked": s.get("asked", []) + [field], "answer": q}
+    """Blocking question: farmer, student or business? (with tap buttons)"""
+    q = followups.build("occupation", s.get("lang", "en"))
+    return {"followup": q, "blocking": True, "asked": s.get("asked", []) + ["occupation"], "answer": q["question"]}
+
+
+def suggest(s: State) -> State:
+    """After the answer: offer the ONE detail that would settle the most 'Need more info' schemes."""
+    field, helps = followups.pick(s.get("results") or [], s.get("asked", []), s["profile"].get("occupation", ""))
+    if not field:
+        return {"followup": None, "blocking": False}
+    return {"followup": followups.build(field, s.get("lang", "en"), helps), "blocking": False,
+            "asked": s.get("asked", []) + [field]}
 
 
 def refuse(s: State) -> State:
@@ -180,7 +179,7 @@ def executor(s: State) -> State:
 ANSWER_PROMPT = """You are JanSahayak, a friendly assistant explaining Indian government schemes in simple English.
 Use ONLY the schemes and evidence given. Never add other schemes. Say "you may be eligible", never "you are eligible".
 For each scheme: one line on the benefit, which conditions are met / need checking, and the next step.
-Cite evidence as [S1], [S2]. Keep it under 180 words. Remind the user to confirm on the official site or at a CSC.
+Cite evidence as [S1], [S2]. Keep it under 180 words. Do not ask the user questions; the app shows one follow-up question separately. Remind the user to confirm on the official site or at a CSC.
 Write the reply in the language given as "Reply language". For Hindi use simple Hindi (Devanagari) and keep scheme names in English; write "आप पात्र हो सकते हैं", never "आप पात्र हैं"."""
 
 
@@ -216,13 +215,13 @@ def critic(s: State) -> State:
 
 
 def route_after_critic(s: State) -> str:
-    return "answer" if s["critic_notes"] and s["steps"] < MAX_STEPS - 1 else END
+    return "answer" if s["critic_notes"] and s["steps"] < MAX_STEPS - 1 else "suggest"
 
 
 def build_graph():
     g = StateGraph(State)
     for name, fn in [("intake", intake), ("ask", ask), ("refuse", refuse), ("planner", planner),
-                     ("executor", executor), ("answer", answer), ("critic", critic)]:
+                     ("executor", executor), ("answer", answer), ("critic", critic), ("suggest", suggest)]:
         g.add_node(name, fn)
     g.set_entry_point("intake")
     g.add_conditional_edges("intake", route_after_intake, {"ask": "ask", "planner": "planner", "refuse": "refuse"})
@@ -231,7 +230,8 @@ def build_graph():
     g.add_edge("planner", "executor")
     g.add_edge("executor", "answer")
     g.add_edge("answer", "critic")
-    g.add_conditional_edges("critic", route_after_critic, {"answer": "answer", END: END})
+    g.add_conditional_edges("critic", route_after_critic, {"answer": "answer", "suggest": "suggest"})
+    g.add_edge("suggest", END)
     return g.compile()
 
 
