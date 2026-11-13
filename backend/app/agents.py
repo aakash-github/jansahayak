@@ -31,6 +31,7 @@ QUESTIONS = {
 
 class State(TypedDict, total=False):
     message: str
+    lang: str  # 'en' or 'hi', sticky for the chat
     history: list
     profile: dict
     asked: list
@@ -92,7 +93,8 @@ async def intake(s: State) -> State:
         occ = _mock_intake(s["message"])["profile"].get("occupation") or ("student" if "course" in profile else None)
         if occ:
             profile["occupation"] = occ
-    return {"profile": profile, "intent": out.get("intent", "find_schemes"), "steps": s.get("steps", 0) + 1}
+    lang = detect_lang(s["message"], s.get("lang", "en"))
+    return {"profile": profile, "lang": lang, "intent": out.get("intent", "find_schemes"), "steps": s.get("steps", 0) + 1}
 
 
 def route_after_intake(s: State) -> str:
@@ -103,15 +105,49 @@ def route_after_intake(s: State) -> str:
     return "ask" if missing else "planner"
 
 
+QUESTIONS_HI = {
+    "occupation": "क्या आप किसान हैं, छात्र हैं, या कोई व्यापार शुरू कर रहे हैं / चला रहे हैं?",
+    "state": "आप किस राज्य में रहते हैं?",
+    "land_acres": "आप कितनी ज़मीन पर खेती करते हैं (एकड़ में)? आप 'छोड़ें' भी कह सकते हैं।",
+    "annual_income": "आपके परिवार की सालाना आय लगभग कितनी है? (कई छात्रवृत्तियों में आय की सीमा होती है। आप 'छोड़ें' भी कह सकते हैं।)",
+    "course": "आप कौन सा कोर्स पढ़ रहे हैं (जैसे B.Tech, डिप्लोमा, BA)?",
+    "age": "आपकी उम्र क्या है?",
+    "business_type": "आपका व्यापार किस तरह का है (जैसे निर्माण/मैन्युफैक्चरिंग, सिलाई, दुकान/सेवा)?",
+}
+FIXED = {
+    "refuse": {
+        "en": "I can only help with finding Indian government schemes for farmers, students and entrepreneurs. "
+              "Please tell me a little about your situation.",
+        "hi": "मैं केवल किसानों, छात्रों और व्यापारियों के लिए सरकारी योजनाएँ खोजने में मदद कर सकता हूँ। "
+              "कृपया अपने बारे में थोड़ा बताइए।",
+    },
+    "no_match": {
+        "en": "I could not find a matching scheme in our current catalogue. Please check myscheme.gov.in "
+              "or visit your nearest Common Service Centre (CSC).",
+        "hi": "हमारी मौजूदा सूची में आपके लिए कोई मेल खाती योजना नहीं मिली। कृपया myscheme.gov.in देखें "
+              "या अपने नज़दीकी कॉमन सर्विस सेंटर (CSC) पर जाएँ।",
+    },
+}
+
+
+def detect_lang(text: str, previous: str = "en") -> str:
+    """Hindi if the message has Devanagari; English if it has 2+ English words; else keep the previous language."""
+    if re.search(r"[ऀ-ॿ]", text):
+        return "hi"
+    if len(re.findall(r"[A-Za-z]{2,}", text)) >= 2:
+        return "en"
+    return previous
+
+
 def ask(s: State) -> State:
     occ = (s["profile"].get("occupation") or "").lower()
     field = next(f for f in REQUIRED.get(occ, REQUIRED[""]) if f not in s["profile"] and f not in s.get("asked", []))
-    return {"followup": QUESTIONS[field], "asked": s.get("asked", []) + [field], "answer": QUESTIONS[field]}
+    q = (QUESTIONS_HI if s.get("lang") == "hi" else QUESTIONS)[field]
+    return {"followup": q, "asked": s.get("asked", []) + [field], "answer": q}
 
 
 def refuse(s: State) -> State:
-    return {"answer": "I can only help with finding Indian government schemes for farmers, students and entrepreneurs. "
-                      "Please tell me a little about your situation."}
+    return {"answer": FIXED["refuse"][s.get("lang", "en")]}
 
 
 def planner(s: State) -> State:
@@ -135,20 +171,19 @@ ANSWER_PROMPT = """You are JanSahayak, a friendly assistant explaining Indian go
 Use ONLY the schemes and evidence given. Never add other schemes. Say "you may be eligible", never "you are eligible".
 For each scheme: one line on the benefit, which conditions are met / need checking, and the next step.
 Cite evidence as [S1], [S2]. Keep it under 180 words. Remind the user to confirm on the official site or at a CSC.
-If the user's question is written in Hindi (Devanagari), write the whole reply in simple Hindi, keeping scheme names in English."""
+Write the reply in the language given as "Reply language". For Hindi use simple Hindi (Devanagari) and keep scheme names in English."""
 
 
 async def answer(s: State) -> State:
     if not s["results"]:
-        return {"answer": "I could not find a matching scheme in our current catalogue. Please check myscheme.gov.in "
-                          "or visit your nearest Common Service Centre (CSC).", "steps": s["steps"] + 1}
+        return {"answer": FIXED["no_match"][s.get("lang", "en")], "steps": s["steps"] + 1}
     schemes = "\n".join(f"- {r['name']} | status: {r['status']} | benefit: {r['benefit']} | conditions: "
                         + "; ".join(f"{c['text']}={c['result']}" for c in r["conditions"]) for r in s["results"])
     ev = "\n".join(f"[S{i+1}] {c['text'][:500]}" for i, c in enumerate(s["evidence"]))
     notes = f"\nFix these problems from the reviewer: {s['critic_notes']}" if s.get("critic_notes") else ""
     text = await llm.chat([
         {"role": "system", "content": ANSWER_PROMPT},
-        {"role": "user", "content": f"Profile: {s['profile']}\nSchemes:\n{schemes}\nEvidence:\n{ev}\nQuestion: {s['message']}{notes}"},
+        {"role": "user", "content": f"Profile: {s['profile']}\nSchemes:\n{schemes}\nEvidence:\n{ev}\nQuestion: {s['message']}\nReply language: {'Hindi' if s.get('lang') == 'hi' else 'English'}{notes}"},
     ], max_tokens=450)
     return {"answer": text, "steps": s["steps"] + 1}
 

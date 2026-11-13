@@ -33,14 +33,15 @@ def health():
 @app.post("/api/chat")
 async def chat(body: ChatIn):
     sid = body.session_id or str(uuid.uuid4())
-    sess = SESSIONS.setdefault(sid, {"profile": {}, "asked": []})
+    sess = SESSIONS.setdefault(sid, {"profile": {}, "asked": [], "lang": "en"})
     try:
         out = await GRAPH.ainvoke({"message": body.message[:1000], "profile": sess["profile"],
-                                   "asked": sess["asked"], "steps": 0})
+                                   "asked": sess["asked"], "lang": sess["lang"], "steps": 0})
     except Exception as e:
         return {"session_id": sid, "message": f"Sorry, the AI service is busy right now ({type(e).__name__}). Please try again.",
                 "profile": sess["profile"], "schemes": [], "sources": [], "needs_followup": False, "data_as_of": DATA_AS_OF}
     sess["profile"], sess["asked"] = out.get("profile", {}), out.get("asked", sess["asked"])
+    sess["lang"] = out.get("lang", sess["lang"])
     return {
         "session_id": sid,
         "message": out.get("answer", ""),
