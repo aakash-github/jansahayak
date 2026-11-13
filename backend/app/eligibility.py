@@ -17,6 +17,8 @@ def _check(rule: dict, profile: dict) -> str:
         return "unknown"
     op, target = rule["op"], rule["value"]
     try:
+        if op == "contains_any":  # free text like course / business type: "B.Tech CSE" matches "b.tech"
+            return "met" if any(str(t).lower() in str(v).lower() for t in target) else "not_met"
         if op == "in":
             return "met" if str(v).lower() in [str(t).lower() for t in target] else "not_met"
         if op == "==":
@@ -30,7 +32,10 @@ def _check(rule: dict, profile: dict) -> str:
 
 
 def evaluate(scheme: dict, profile: dict) -> dict:
-    conditions = [{"text": r["text"], "field": r["field"], "result": _check(r, profile)} for r in scheme["rules"]]
+    rules = list(scheme["rules"])
+    if scheme["states"] != ["All India"]:  # state-only schemes: unknown until we know the user's state
+        rules.insert(0, {"field": "state", "op": "in", "value": scheme["states"], "text": "Lives in " + ", ".join(scheme["states"])})
+    conditions = [{"text": r["text"], "field": r["field"], "result": _check(r, profile)} for r in rules]
     results = {c["result"] for c in conditions}
     status = ("appears_not_eligible" if "not_met" in results
               else "more_info_needed" if "unknown" in results
@@ -50,7 +55,9 @@ def find_schemes(profile: dict, limit: int = 5) -> list[dict]:
             continue
         out.append(evaluate(s, profile))
     rank = {"potentially_eligible": 0, "more_info_needed": 1, "appears_not_eligible": 2}
-    return sorted(out, key=lambda r: rank[r["status"]])[:limit]
+    count = lambda r, res: sum(c["result"] == res and c["field"] != "occupation" for c in r["conditions"])
+    # best status first; then fewer open questions; then more specific matches (category, income...)
+    return sorted(out, key=lambda r: (rank[r["status"]], count(r, "unknown"), -count(r, "met")))[:limit]
 
 
 def documents_for(scheme_id: str) -> list[str]:

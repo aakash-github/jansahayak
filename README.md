@@ -21,7 +21,7 @@ flowchart LR
   P["Offline: scripts/ingest.py<br/>PDFs → chunks → embeddings"] -.-> T2
 ```
 
-**No separate database.** The scheme rules (`schemes.json`) and RAG index (`chunks.json`, `embeddings.npy`) are files that ship inside the backend container. Embeddings run locally with fastembed (ONNX), because the course endpoint does not provide them. Sessions live in server memory and are cleared on reset.
+**No separate database.** The scheme rules (`schemes.json`) and RAG index (`chunks.json`, `embeddings.npy`) are files that ship inside the backend container. Embeddings come from the course embedding API (VM02, `bge-small-en-v1.5`); if it is down, the backend runs the same model locally with fastembed and gets identical vectors. Sessions live in server memory and are cleared on reset.
 
 ### Agent workflow (one chat turn)
 
@@ -48,7 +48,8 @@ cd backend
 python -m venv .venv && .venv/Scripts/pip install -r requirements.txt   # mac/linux: .venv/bin/pip
 cp ../.env.example .env        # fill key, URL and cert path (or leave empty for MOCK mode)
 .venv/Scripts/python ../scripts/test_llm.py        # 1. prove the API works
-.venv/Scripts/python ../scripts/ingest.py          # 2. build RAG index (after adding PDFs to data/raw)
+.venv/Scripts/python ../scripts/download_pdfs.py   # 2a. fetch the PDFs listed in data/sources.json
+.venv/Scripts/python ../scripts/ingest.py          # 2b. build RAG index from data/raw
 .venv/Scripts/uvicorn app.main:app --reload        # 3. http://localhost:8000/health
 
 # frontend (needs Node 20+)
@@ -61,7 +62,8 @@ cd frontend && npm install && npm run dev          # http://localhost:5173
 
 ## Adding data
 - Schemes and rules: `backend/data/schemes.json` (fields follow the `Scheme_Data_Schema` sheet). Set `verification_status` to `verified` only after checking against myScheme or the official guideline.
-- Documents: put them in `backend/data/raw/` as `<SCHEME_ID>__name.pdf`, then run `scripts/ingest.py`. Raw PDFs are git-ignored; commit `chunks.json` and `embeddings.npy`.
+- Documents: `backend/data/sources.json` lists every PDF we collected (87), each tagged `use`, `later`, `not_citizen`, `need_ocr`, `not_english` or `broken` with a note. `scripts/download_pdfs.py` downloads the `use` ones (`--all` for every one) into `backend/data/raw/`, then `scripts/ingest.py` rebuilds the index. Raw PDFs are git-ignored (about 75 MB); commit `chunks.json` and `embeddings.npy`.
+- To add a scheme: add it to `schemes.json`, add its PDF to `sources.json` with status `use` and its scheme ID, then run both scripts.
 - Eval: fill `gold_scheme_ids` in `eval/eval_set.csv`, then run `eval/run_eval.py`.
 
 ## Responsible AI

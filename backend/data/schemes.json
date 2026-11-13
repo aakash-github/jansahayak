@@ -1,123 +1,1076 @@
 [
-  {
-    "scheme_id": "FARM-01",
-    "scheme_name": "PM-KISAN Samman Nidhi",
-    "beneficiary_groups": ["farmer"],
-    "states": ["All India"],
-    "benefit": "Rs 6,000 per year income support, paid in 3 instalments of Rs 2,000 to the bank account",
-    "rules": [
-      {"field": "occupation", "op": "==", "value": "farmer", "text": "Landholding farmer family"},
-      {"field": "land_acres", "op": ">", "value": 0, "text": "Owns cultivable land in their name (tenant farmers are not covered)"}
+ {
+  "scheme_id": "FARM-01",
+  "scheme_name": "PM-KISAN Samman Nidhi",
+  "beneficiary_groups": [
+   "farmer"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Rs 6,000 per year income support, paid in 3 instalments of Rs 2,000 to the bank account",
+  "rules": [
+   {
+    "field": "occupation",
+    "op": "==",
+    "value": "farmer",
+    "text": "Landholding farmer family"
+   },
+   {
+    "field": "land_acres",
+    "op": ">",
+    "value": 0,
+    "text": "Owns cultivable land in their name (tenant farmers are not covered)"
+   }
+  ],
+  "required_documents": [
+   "Aadhaar card",
+   "Land ownership records",
+   "Bank account linked with Aadhaar"
+  ],
+  "official_url": "https://pmkisan.gov.in/",
+  "source_url": "https://pmkisan.gov.in/Documents/RevisedPM-KISANOperationalGuidelines(English).pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "FARM-02",
+  "scheme_name": "Pradhan Mantri Fasal Bima Yojana (PMFBY)",
+  "beneficiary_groups": [
+   "farmer"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Crop insurance at low premium (2% kharif, 1.5% rabi, 5% commercial/horticulture crops)",
+  "rules": [
+   {
+    "field": "occupation",
+    "op": "==",
+    "value": "farmer",
+    "text": "Farmer (owner, tenant or sharecropper) growing notified crops in a notified area"
+   }
+  ],
+  "required_documents": [
+   "Aadhaar card",
+   "Land records or tenancy/sowing certificate",
+   "Bank passbook",
+   "Sowing declaration"
+  ],
+  "official_url": "https://pmfby.gov.in/",
+  "source_url": "https://agri.odisha.gov.in/sites/default/files/2025-03/operational_guidelines_pmfby.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "FARM-03",
+  "scheme_name": "Kisan Credit Card (KCC)",
+  "beneficiary_groups": [
+   "farmer"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Short-term crop and allied-activity (dairy, fisheries) credit at concessional interest with interest subvention",
+  "rules": [
+   {
+    "field": "occupation",
+    "op": "==",
+    "value": "farmer",
+    "text": "Farmer, tenant farmer, or engaged in animal husbandry/fisheries"
+   },
+   {
+    "field": "age",
+    "op": ">=",
+    "value": 18,
+    "text": "Age 18 or above"
+   }
+  ],
+  "required_documents": [
+   "Identity proof",
+   "Address proof",
+   "Land records or tenancy proof",
+   "Passport-size photo"
+  ],
+  "official_url": "https://www.dahd.gov.in/en/division/kcc",
+  "source_url": "https://financialservices.gov.in/sites/default/files/order-notices/F.NO%252003272011-AC.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "STU-01",
+  "scheme_name": "PM-USP Central Sector Scheme of Scholarship (CSSS)",
+  "beneficiary_groups": [
+   "student"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Rs 12,000 per year (first 3 years of graduation) and Rs 20,000 per year for postgraduation",
+  "rules": [
+   {
+    "field": "occupation",
+    "op": "==",
+    "value": "student",
+    "text": "Regular college student"
+   },
+   {
+    "field": "annual_income",
+    "op": "<=",
+    "value": 450000,
+    "text": "Family income up to Rs 4.5 lakh per year"
+   },
+   {
+    "field": "class12_top20",
+    "op": "is_true",
+    "value": true,
+    "text": "Above 80th percentile in Class 12 of their board"
+   }
+  ],
+  "required_documents": [
+   "Class 12 marksheet",
+   "Income certificate",
+   "College admission proof",
+   "Bank account details"
+  ],
+  "official_url": "https://scholarships.gov.in/",
+  "source_url": "https://scholarships.gov.in/public/schemeGuidelines/FAQ_DOHE_CSSS.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "STU-02",
+  "scheme_name": "AICTE Pragati Scholarship",
+  "beneficiary_groups": [
+   "student"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Rs 50,000 per year for girl students in AICTE-approved technical degree/diploma courses",
+  "rules": [
+   {
+    "field": "occupation",
+    "op": "==",
+    "value": "student",
+    "text": "Student in an AICTE-approved technical course"
+   },
+   {
+    "field": "gender",
+    "op": "==",
+    "value": "female",
+    "text": "Girl student"
+   },
+   {
+    "field": "annual_income",
+    "op": "<=",
+    "value": 800000,
+    "text": "Family income up to Rs 8 lakh per year"
+   },
+   {
+    "field": "course",
+    "op": "contains_any",
+    "value": [
+     "b.tech",
+     "btech",
+     "b.e.",
+     "engineering",
+     "diploma",
+     "polytechnic",
+     "b.arch",
+     "b.pharm",
+     "bpharm",
+     "m.tech",
+     "mtech",
+     "mca",
+     "mba",
+     "pgdm"
     ],
-    "required_documents": ["Aadhaar card", "Land ownership records", "Bank account linked with Aadhaar"],
-    "official_url": "https://pmkisan.gov.in/",
-    "source_url": "https://pmkisan.gov.in/Documents/RevisedPM-KISANOperationalGuidelines%28English%29.pdf",
-    "verification_status": "needs_review"
-  },
-  {
-    "scheme_id": "FARM-02",
-    "scheme_name": "Pradhan Mantri Fasal Bima Yojana (PMFBY)",
-    "beneficiary_groups": ["farmer"],
-    "states": ["All India"],
-    "benefit": "Crop insurance at low premium (2% kharif, 1.5% rabi, 5% commercial/horticulture crops)",
-    "rules": [
-      {"field": "occupation", "op": "==", "value": "farmer", "text": "Farmer (owner, tenant or sharecropper) growing notified crops in a notified area"}
+    "text": "Studying a technical degree/diploma course in an AICTE-approved institution"
+   }
+  ],
+  "required_documents": [
+   "Income certificate",
+   "Admission letter",
+   "Class 10/12 marksheets",
+   "Bank account details"
+  ],
+  "official_url": "https://scholarships.gov.in/",
+  "source_url": "https://scholarships.gov.in/public/schemeGuidelines/AICTE/AICTE_2010_G.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "STU-03",
+  "scheme_name": "AICTE Saksham Scholarship",
+  "beneficiary_groups": [
+   "student"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Rs 50,000 per year for specially-abled students in AICTE-approved technical courses",
+  "rules": [
+   {
+    "field": "occupation",
+    "op": "==",
+    "value": "student",
+    "text": "Student in an AICTE-approved technical course"
+   },
+   {
+    "field": "disability",
+    "op": "is_true",
+    "value": true,
+    "text": "Disability of 40% or more"
+   },
+   {
+    "field": "annual_income",
+    "op": "<=",
+    "value": 800000,
+    "text": "Family income up to Rs 8 lakh per year"
+   },
+   {
+    "field": "course",
+    "op": "contains_any",
+    "value": [
+     "b.tech",
+     "btech",
+     "b.e.",
+     "engineering",
+     "diploma",
+     "polytechnic",
+     "b.arch",
+     "b.pharm",
+     "bpharm",
+     "m.tech",
+     "mtech",
+     "mca",
+     "mba",
+     "pgdm"
     ],
-    "required_documents": ["Aadhaar card", "Land records or tenancy/sowing certificate", "Bank passbook", "Sowing declaration"],
-    "official_url": "https://pmfby.gov.in/",
-    "source_url": "https://pmfby.gov.in/",
-    "verification_status": "needs_review"
-  },
-  {
-    "scheme_id": "FARM-03",
-    "scheme_name": "Kisan Credit Card (KCC)",
-    "beneficiary_groups": ["farmer"],
-    "states": ["All India"],
-    "benefit": "Short-term crop and allied-activity (dairy, fisheries) credit at concessional interest with interest subvention",
-    "rules": [
-      {"field": "occupation", "op": "==", "value": "farmer", "text": "Farmer, tenant farmer, or engaged in animal husbandry/fisheries"},
-      {"field": "age", "op": ">=", "value": 18, "text": "Age 18 or above"}
+    "text": "Studying a technical degree/diploma course in an AICTE-approved institution"
+   }
+  ],
+  "required_documents": [
+   "Disability certificate",
+   "Income certificate",
+   "Admission letter",
+   "Bank account details"
+  ],
+  "official_url": "https://scholarships.gov.in/",
+  "source_url": "https://scholarships.gov.in/public/schemeGuidelines/AICTE/AICTE_2013_G.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "ENT-01",
+  "scheme_name": "Prime Minister's Employment Generation Programme (PMEGP)",
+  "beneficiary_groups": [
+   "entrepreneur"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "15-35% subsidy on bank loan for a new micro-enterprise (projects up to Rs 50 lakh manufacturing / Rs 20 lakh service)",
+  "rules": [
+   {
+    "field": "occupation",
+    "op": "==",
+    "value": "entrepreneur",
+    "text": "Setting up a new micro-enterprise"
+   },
+   {
+    "field": "age",
+    "op": ">=",
+    "value": 18,
+    "text": "Age 18 or above"
+   }
+  ],
+  "required_documents": [
+   "Project report",
+   "Identity and address proof",
+   "Education certificate (VIII pass for larger projects)",
+   "Caste/special-category certificate if applicable"
+  ],
+  "official_url": "https://www.kviconline.gov.in/pmegpeportal/",
+  "source_url": "https://msme1connect.up.gov.in/GovernmentScheme/GovernmentScheme638740881655062171.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "ENT-02",
+  "scheme_name": "Credit Guarantee Scheme (CGTMSE)",
+  "beneficiary_groups": [
+   "entrepreneur"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Collateral-free bank loans for micro and small enterprises, guaranteed by CGTMSE",
+  "rules": [
+   {
+    "field": "occupation",
+    "op": "==",
+    "value": "entrepreneur",
+    "text": "New or existing micro/small enterprise"
+   }
+  ],
+  "required_documents": [
+   "Udyam registration",
+   "Business plan / loan application",
+   "KYC documents"
+  ],
+  "official_url": "https://www.cgtmse.in/",
+  "source_url": "https://msme.gov.in/static/uploads/2025/07/8d74a66bbbb265a325c8501ba50bf365.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "FARM-04",
+  "scheme_name": "Pradhan Mantri Kisan Maan-Dhan Yojana (PM-KMY)",
+  "beneficiary_groups": [
+   "farmer"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Pension of Rs 3,000 per month after age 60; farmer pays a small monthly contribution (Rs 55-200 by entry age) and the government matches it",
+  "rules": [
+   {
+    "field": "occupation",
+    "op": "==",
+    "value": "farmer",
+    "text": "Small or marginal farmer"
+   },
+   {
+    "field": "age",
+    "op": ">=",
+    "value": 18,
+    "text": "Entry age 18 to 40 years"
+   },
+   {
+    "field": "age",
+    "op": "<=",
+    "value": 40,
+    "text": "Entry age not above 40 years"
+   },
+   {
+    "field": "land_acres",
+    "op": "<=",
+    "value": 4.94,
+    "text": "Owns cultivable land up to 2 hectares (about 4.9 acres)"
+   }
+  ],
+  "required_documents": [
+   "Aadhaar card",
+   "Land records",
+   "Savings bank account / PM-KISAN account"
+  ],
+  "official_url": "https://maandhan.in/",
+  "source_url": "https://agriwelfare.gov.in/sites/default/files/OG-PMKMY_ENG.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "FARM-05",
+  "scheme_name": "Per Drop More Crop (PDMC) - Micro Irrigation",
+  "beneficiary_groups": [
+   "farmer"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Subsidy on drip and sprinkler irrigation: 55% of cost for small and marginal farmers, 45% for other farmers (up to 5 hectares)",
+  "rules": [
+   {
+    "field": "occupation",
+    "op": "==",
+    "value": "farmer",
+    "text": "Farmer with cultivable land"
+   },
+   {
+    "field": "land_acres",
+    "op": ">",
+    "value": 0,
+    "text": "Has land where the system will be installed"
+   }
+  ],
+  "required_documents": [
+   "Aadhaar card",
+   "Land records",
+   "Bank account details",
+   "Quotation from registered supplier"
+  ],
+  "official_url": "https://pmksy.gov.in/",
+  "source_url": "https://pmksy.gov.in/microirrigation/Archive/Revised_PDMC_Operational_Guidelines2023.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "FARM-06",
+  "scheme_name": "Sub-Mission on Agricultural Mechanization (SMAM)",
+  "beneficiary_groups": [
+   "farmer"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Subsidy on farm machinery: 50% for small/marginal, SC/ST and women farmers; 40% for other farmers",
+  "rules": [
+   {
+    "field": "occupation",
+    "op": "==",
+    "value": "farmer",
+    "text": "Farmer buying approved farm machinery"
+   }
+  ],
+  "required_documents": [
+   "Aadhaar card",
+   "Land records",
+   "Bank account details",
+   "Caste certificate (if applicable)"
+  ],
+  "official_url": "https://agrimachinery.nic.in/",
+  "source_url": "https://farmech.dac.gov.in/Content/New_Folder/Revised_SMAM_Guidelines_%282025%29_With_Covering.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "FARM-07",
+  "scheme_name": "Namo Drone Didi",
+  "beneficiary_groups": [
+   "farmer"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Agricultural drone for women Self Help Groups: 80% of cost (up to Rs 8 lakh) plus 3% interest subvention on the loan for the rest",
+  "rules": [
+   {
+    "field": "gender",
+    "op": "==",
+    "value": "female",
+    "text": "Woman"
+   },
+   {
+    "field": "shg_member",
+    "op": "is_true",
+    "value": true,
+    "text": "Member of a women Self Help Group (DAY-NRLM) selected in the cluster"
+   }
+  ],
+  "required_documents": [
+   "Aadhaar card",
+   "SHG membership details",
+   "Bank account of SHG"
+  ],
+  "official_url": "https://lakhpatididi.gov.in/",
+  "source_url": "https://farmech.dac.gov.in/Content/New_Folder/Operational_Guidelines_of_Namo_Drone_Didi_Scheme.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "FARM-08",
+  "scheme_name": "Soil Health Card Scheme",
+  "beneficiary_groups": [
+   "farmer"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Free soil testing and a Soil Health Card that tells which fertilisers and how much to use for your field",
+  "rules": [
+   {
+    "field": "occupation",
+    "op": "==",
+    "value": "farmer",
+    "text": "Farmer with a field to test"
+   }
+  ],
+  "required_documents": [
+   "Aadhaar card",
+   "Land / field details"
+  ],
+  "official_url": "https://soilhealth.dac.gov.in/",
+  "source_url": "https://soilhealth.dac.gov.in/files/documents/Guidelines_for_Demonstrations_under_SHC_Scheme.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "FARM-09",
+  "scheme_name": "Agri-Clinics and Agri-Business Centres (AC&ABC)",
+  "beneficiary_groups": [
+   "farmer",
+   "entrepreneur",
+   "student"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Free 45-day training for agriculture graduates/diploma holders, then a bank loan with 36% subsidy (44% for women, SC/ST and North-East/hill states)",
+  "rules": [
+   {
+    "field": "course",
+    "op": "contains_any",
+    "value": [
+     "agriculture",
+     "b.sc agriculture",
+     "bsc agriculture",
+     "diploma in agriculture",
+     "veterinary",
+     "horticulture"
     ],
-    "required_documents": ["Identity proof", "Address proof", "Land records or tenancy proof", "Passport-size photo"],
-    "official_url": "https://www.dahd.gov.in/en/division/kcc",
-    "source_url": "https://fasalrin.gov.in/circulars",
-    "verification_status": "needs_review"
-  },
-  {
-    "scheme_id": "STU-01",
-    "scheme_name": "PM-USP Central Sector Scheme of Scholarship (CSSS)",
-    "beneficiary_groups": ["student"],
-    "states": ["All India"],
-    "benefit": "Rs 12,000 per year (first 3 years of graduation) and Rs 20,000 per year for postgraduation",
-    "rules": [
-      {"field": "occupation", "op": "==", "value": "student", "text": "Regular college student"},
-      {"field": "annual_income", "op": "<=", "value": 450000, "text": "Family income up to Rs 4.5 lakh per year"},
-      {"field": "class12_top20", "op": "is_true", "value": true, "text": "Above 80th percentile in Class 12 of their board"}
+    "text": "Graduate / diploma in agriculture or an allied subject"
+   },
+   {
+    "field": "age",
+    "op": ">=",
+    "value": 18,
+    "text": "Age 18 to 60 years"
+   },
+   {
+    "field": "age",
+    "op": "<=",
+    "value": 60,
+    "text": "Age not above 60 years"
+   }
+  ],
+  "required_documents": [
+   "Degree / diploma certificate",
+   "Aadhaar card",
+   "Project report",
+   "Bank account details"
+  ],
+  "official_url": "https://www.acabcmis.gov.in/",
+  "source_url": "https://agriwelfare.gov.in/sites/default/files/ACABC_Revised_compendium_301225.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "FARM-10",
+  "scheme_name": "Mission for Integrated Development of Horticulture (MIDH)",
+  "beneficiary_groups": [
+   "farmer"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Subsidy for growing fruits, vegetables, flowers, spices; polyhouses, nurseries, cold storage and post-harvest units (rates set by your state)",
+  "rules": [
+   {
+    "field": "occupation",
+    "op": "==",
+    "value": "farmer",
+    "text": "Farmer growing or planning horticulture crops"
+   }
+  ],
+  "required_documents": [
+   "Aadhaar card",
+   "Land records",
+   "Bank account details"
+  ],
+  "official_url": "https://midh.gov.in/",
+  "source_url": "https://nhb.gov.in/writereaddata/MIDH_Guidelines.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "STU-04",
+  "scheme_name": "AICTE Swanath Scholarship",
+  "beneficiary_groups": [
+   "student"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Rs 50,000 per year for degree or diploma students in AICTE-approved technical institutions",
+  "rules": [
+   {
+    "field": "swanath_category",
+    "op": "is_true",
+    "value": true,
+    "text": "Orphan, or a parent died of COVID-19, or ward of armed forces/CAPF personnel martyred in action"
+   },
+   {
+    "field": "annual_income",
+    "op": "<=",
+    "value": 800000,
+    "text": "Family income up to Rs 8 lakh per year"
+   },
+   {
+    "field": "course",
+    "op": "contains_any",
+    "value": [
+     "b.tech",
+     "btech",
+     "b.e.",
+     "engineering",
+     "diploma",
+     "polytechnic",
+     "b.arch",
+     "b.pharm",
+     "bpharm",
+     "m.tech",
+     "mtech",
+     "mca",
+     "mba",
+     "pgdm"
     ],
-    "required_documents": ["Class 12 marksheet", "Income certificate", "College admission proof", "Bank account details"],
-    "official_url": "https://scholarships.gov.in/",
-    "source_url": "https://www.education.gov.in/sites/upload_files/mhrd/files/upload_document/PM_USP_CSSS_guidelines_updated.pdf",
-    "verification_status": "needs_review"
-  },
-  {
-    "scheme_id": "STU-02",
-    "scheme_name": "AICTE Pragati Scholarship",
-    "beneficiary_groups": ["student"],
-    "states": ["All India"],
-    "benefit": "Rs 50,000 per year for girl students in AICTE-approved technical degree/diploma courses",
-    "rules": [
-      {"field": "occupation", "op": "==", "value": "student", "text": "Student in an AICTE-approved technical course"},
-      {"field": "gender", "op": "==", "value": "female", "text": "Girl student"},
-      {"field": "annual_income", "op": "<=", "value": 800000, "text": "Family income up to Rs 8 lakh per year"}
+    "text": "Studying a technical degree/diploma course in an AICTE-approved institution"
+   }
+  ],
+  "required_documents": [
+   "Income certificate",
+   "Proof of orphan / parent's death / martyrdom",
+   "Admission proof",
+   "Bank account details"
+  ],
+  "official_url": "https://scholarships.gov.in/",
+  "source_url": "https://scholarships.gov.in/public/schemeGuidelines/AICTE/AICTE_3038_G.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "STU-05",
+  "scheme_name": "PM-YASASVI Post-Matric Scholarship for OBC, EBC and DNT Students",
+  "beneficiary_groups": [
+   "student"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Scholarship for studies after Class 10 (fees and maintenance allowance), paid through your state",
+  "rules": [
+   {
+    "field": "category",
+    "op": "in",
+    "value": [
+     "obc",
+     "ebc",
+     "dnt"
     ],
-    "required_documents": ["Income certificate", "Admission letter", "Class 10/12 marksheets", "Bank account details"],
-    "official_url": "https://scholarships.gov.in/",
-    "source_url": "https://www.aicte-india.org/",
-    "verification_status": "needs_review"
-  },
-  {
-    "scheme_id": "STU-03",
-    "scheme_name": "AICTE Saksham Scholarship",
-    "beneficiary_groups": ["student"],
-    "states": ["All India"],
-    "benefit": "Rs 50,000 per year for specially-abled students in AICTE-approved technical courses",
-    "rules": [
-      {"field": "occupation", "op": "==", "value": "student", "text": "Student in an AICTE-approved technical course"},
-      {"field": "disability", "op": "is_true", "value": true, "text": "Disability of 40% or more"},
-      {"field": "annual_income", "op": "<=", "value": 800000, "text": "Family income up to Rs 8 lakh per year"}
+    "text": "Belongs to OBC, EBC or DNT category"
+   },
+   {
+    "field": "annual_income",
+    "op": "<=",
+    "value": 250000,
+    "text": "Parents' income up to Rs 2.5 lakh per year"
+   }
+  ],
+  "required_documents": [
+   "Income certificate",
+   "Caste certificate (if applicable)",
+   "Previous year marksheet",
+   "Admission/fee receipt",
+   "Bank account details"
+  ],
+  "official_url": "https://scholarships.gov.in/",
+  "source_url": "https://scholarships.gov.in/public/schemeGuidelines/POST_MATRIC_OBC_GUIDELINES.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "STU-06",
+  "scheme_name": "Post-Matric Scholarship for ST Students",
+  "beneficiary_groups": [
+   "student"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Pays compulsory fees and a maintenance allowance for studies after Class 10",
+  "rules": [
+   {
+    "field": "category",
+    "op": "==",
+    "value": "st",
+    "text": "Belongs to a Scheduled Tribe"
+   },
+   {
+    "field": "annual_income",
+    "op": "<=",
+    "value": 250000,
+    "text": "Parents' income up to Rs 2.5 lakh per year"
+   }
+  ],
+  "required_documents": [
+   "Income certificate",
+   "Caste certificate (if applicable)",
+   "Previous year marksheet",
+   "Admission/fee receipt",
+   "Bank account details"
+  ],
+  "official_url": "https://scholarships.gov.in/",
+  "source_url": "https://scholarships.gov.in/public/schemeGuidelines/EDUPostMatricScholarshipPMSforSTstudents.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "STU-07",
+  "scheme_name": "Top Class Education Scheme for SC Students",
+  "beneficiary_groups": [
+   "student"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Full tuition fees plus living expenses, books and a laptop for SC students admitted to notified top institutions (IITs, IIMs, NITs, AIIMS etc.)",
+  "rules": [
+   {
+    "field": "category",
+    "op": "==",
+    "value": "sc",
+    "text": "Belongs to a Scheduled Caste"
+   },
+   {
+    "field": "annual_income",
+    "op": "<=",
+    "value": 800000,
+    "text": "Family income up to Rs 8 lakh per year"
+   },
+   {
+    "field": "top_institution",
+    "op": "is_true",
+    "value": true,
+    "text": "Admitted to a notified top institution"
+   }
+  ],
+  "required_documents": [
+   "Income certificate",
+   "Caste certificate (if applicable)",
+   "Previous year marksheet",
+   "Admission/fee receipt",
+   "Bank account details"
+  ],
+  "official_url": "https://scholarships.gov.in/",
+  "source_url": "https://scholarships.gov.in/public/schemeGuidelines/Top_Class_Education_Scheme_2018.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "STU-08",
+  "scheme_name": "Top Class Education in College for OBC, EBC and DNT Students",
+  "beneficiary_groups": [
+   "student"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Full tuition fees plus living expenses, books and computer for students admitted to notified top institutions",
+  "rules": [
+   {
+    "field": "category",
+    "op": "in",
+    "value": [
+     "obc",
+     "ebc",
+     "dnt"
     ],
-    "required_documents": ["Disability certificate", "Income certificate", "Admission letter", "Bank account details"],
-    "official_url": "https://scholarships.gov.in/",
-    "source_url": "https://www.aicte-india.org/",
-    "verification_status": "needs_review"
-  },
-  {
-    "scheme_id": "ENT-01",
-    "scheme_name": "Prime Minister's Employment Generation Programme (PMEGP)",
-    "beneficiary_groups": ["entrepreneur"],
-    "states": ["All India"],
-    "benefit": "15-35% subsidy on bank loan for a new micro-enterprise (projects up to Rs 50 lakh manufacturing / Rs 20 lakh service)",
-    "rules": [
-      {"field": "occupation", "op": "==", "value": "entrepreneur", "text": "Setting up a new micro-enterprise"},
-      {"field": "age", "op": ">=", "value": 18, "text": "Age 18 or above"}
+    "text": "Belongs to OBC, EBC or DNT category"
+   },
+   {
+    "field": "annual_income",
+    "op": "<=",
+    "value": 250000,
+    "text": "Family income up to Rs 2.5 lakh per year"
+   },
+   {
+    "field": "top_institution",
+    "op": "is_true",
+    "value": true,
+    "text": "Admitted to a notified top institution"
+   }
+  ],
+  "required_documents": [
+   "Income certificate",
+   "Caste certificate (if applicable)",
+   "Previous year marksheet",
+   "Admission/fee receipt",
+   "Bank account details"
+  ],
+  "official_url": "https://scholarships.gov.in/",
+  "source_url": "https://scholarships.gov.in/public/schemeGuidelines/ApprovedmodifieddraftofTopClassCollege.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "STU-09",
+  "scheme_name": "Scholarships for Students with Disabilities (DEPwD)",
+  "beneficiary_groups": [
+   "student"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Pre-matric, post-matric and top-class scholarships with maintenance and disability allowances",
+  "rules": [
+   {
+    "field": "disability",
+    "op": "is_true",
+    "value": true,
+    "text": "Has a benchmark disability (40% or more), with UDID card or enrolment"
+   },
+   {
+    "field": "annual_income",
+    "op": "<=",
+    "value": 800000,
+    "text": "Family income within the limit for the component (Rs 2.5 lakh pre/post-matric, Rs 8 lakh top class)"
+   }
+  ],
+  "required_documents": [
+   "Disability certificate / UDID card",
+   "Income certificate",
+   "Previous marksheet",
+   "Bank account details"
+  ],
+  "official_url": "https://scholarships.gov.in/",
+  "source_url": "https://scholarships.gov.in/public/schemeGuidelines/DEPDGuidelines.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "STU-10",
+  "scheme_name": "National Means-cum-Merit Scholarship (NMMSS)",
+  "beneficiary_groups": [
+   "student"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Rs 12,000 per year for Classes 9 to 12 for students who pass the state NMMS exam in Class 8",
+  "rules": [
+   {
+    "field": "school_student",
+    "op": "is_true",
+    "value": true,
+    "text": "Studying in a government / aided school, selected through the Class 8 NMMS exam"
+   },
+   {
+    "field": "annual_income",
+    "op": "<=",
+    "value": 350000,
+    "text": "Parents' income up to Rs 3.5 lakh per year"
+   }
+  ],
+  "required_documents": [
+   "NMMS exam result",
+   "Income certificate",
+   "School certificate",
+   "Bank account details"
+  ],
+  "official_url": "https://scholarships.gov.in/",
+  "source_url": "https://scholarships.gov.in/public/schemeGuidelines/NMMSSGuidelines.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "STU-11",
+  "scheme_name": "Ishan Uday Scholarship for North Eastern Region",
+  "beneficiary_groups": [
+   "student"
+  ],
+  "states": [
+   "Arunachal Pradesh",
+   "Assam",
+   "Manipur",
+   "Meghalaya",
+   "Mizoram",
+   "Nagaland",
+   "Sikkim",
+   "Tripura"
+  ],
+  "benefit": "Monthly scholarship for general degree and technical/professional courses for students from the North East",
+  "rules": [
+   {
+    "field": "annual_income",
+    "op": "<=",
+    "value": 450000,
+    "text": "Parents' income up to Rs 4.5 lakh per year"
+   }
+  ],
+  "required_documents": [
+   "Domicile certificate (NER state)",
+   "Income certificate",
+   "Class 12 marksheet",
+   "Admission proof",
+   "Bank account details"
+  ],
+  "official_url": "https://scholarships.gov.in/",
+  "source_url": "https://scholarships.gov.in/public/schemeGuidelines/ISHAN_UDAY_GUIDELINE.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "STU-12",
+  "scheme_name": "INSPIRE Scholarship for Higher Education (SHE)",
+  "beneficiary_groups": [
+   "student"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Rs 80,000 per year for BSc/MSc in natural and basic sciences (up to 5 years)",
+  "rules": [
+   {
+    "field": "class12_top1",
+    "op": "is_true",
+    "value": true,
+    "text": "Top 1% in Class 12 board exam (or JEE/NEET rank / KVPY / NTSE scholar)"
+   },
+   {
+    "field": "course",
+    "op": "contains_any",
+    "value": [
+     "b.sc",
+     "bsc",
+     "m.sc",
+     "msc",
+     "bs-ms",
+     "integrated msc"
     ],
-    "required_documents": ["Project report", "Identity and address proof", "Education certificate (VIII pass for larger projects)", "Caste/special-category certificate if applicable"],
-    "official_url": "https://www.kviconline.gov.in/pmegpeportal/",
-    "source_url": "https://www.msme.gov.in/sites/default/files/Revisedguidelines07.12.2023.pdf",
-    "verification_status": "needs_review"
-  },
-  {
-    "scheme_id": "ENT-02",
-    "scheme_name": "Credit Guarantee Scheme (CGTMSE)",
-    "beneficiary_groups": ["entrepreneur"],
-    "states": ["All India"],
-    "benefit": "Collateral-free bank loans for micro and small enterprises, guaranteed by CGTMSE",
-    "rules": [
-      {"field": "occupation", "op": "==", "value": "entrepreneur", "text": "New or existing micro/small enterprise"}
+    "text": "Studying BSc / MSc in natural or basic sciences"
+   }
+  ],
+  "required_documents": [
+   "Class 12 marksheet / rank card",
+   "Admission proof",
+   "Bank account details"
+  ],
+  "official_url": "https://online-inspire.gov.in/",
+  "source_url": "https://www.online-inspire.gov.in/Content/SHEFAQs.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "ENT-03",
+  "scheme_name": "PM Formalisation of Micro Food Processing Enterprises (PMFME)",
+  "beneficiary_groups": [
+   "entrepreneur"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "35% credit-linked subsidy (up to Rs 10 lakh) to set up or upgrade a micro food-processing unit, plus training and branding support",
+  "rules": [
+   {
+    "field": "occupation",
+    "op": "==",
+    "value": "entrepreneur",
+    "text": "Runs or will run a micro food-processing unit"
+   },
+   {
+    "field": "age",
+    "op": ">=",
+    "value": 18,
+    "text": "Age above 18 years"
+   },
+   {
+    "field": "business_type",
+    "op": "contains_any",
+    "value": [
+     "food processing",
+     "food",
+     "pickle",
+     "bakery",
+     "dairy",
+     "spices",
+     "snacks"
     ],
-    "required_documents": ["Udyam registration", "Business plan / loan application", "KYC documents"],
-    "official_url": "https://www.cgtmse.in/",
-    "source_url": "https://www.cgtmse.in/schemes.aspx",
-    "verification_status": "needs_review"
-  }
+    "text": "Business is food processing"
+   }
+  ],
+  "required_documents": [
+   "Aadhaar card",
+   "PAN card",
+   "Project report",
+   "Bank account details"
+  ],
+  "official_url": "https://pmfme.mofpi.gov.in/",
+  "source_url": "https://pmfme.mofpi.gov.in/newsletters/docs/SchemeGuidelines.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "ENT-04",
+  "scheme_name": "Startup India Seed Fund Scheme (SISFS)",
+  "beneficiary_groups": [
+   "entrepreneur"
+  ],
+  "states": [
+   "All India"
+  ],
+  "benefit": "Up to Rs 20 lakh grant for proof of concept/prototype and up to Rs 50 lakh (debt/convertible) for market entry, through approved incubators",
+  "rules": [
+   {
+    "field": "occupation",
+    "op": "==",
+    "value": "entrepreneur",
+    "text": "Startup founder"
+   },
+   {
+    "field": "dpiit_recognised",
+    "op": "is_true",
+    "value": true,
+    "text": "Startup recognised by DPIIT, incorporated not more than 2 years ago"
+   }
+  ],
+  "required_documents": [
+   "DPIIT recognition certificate",
+   "Certificate of incorporation",
+   "Pitch deck / business plan"
+  ],
+  "official_url": "https://seedfund.startupindia.gov.in/",
+  "source_url": "https://seedfundapi.startupindia.gov.in:3535/filestorage/samplefiles/Guidelines_for_Startup_India_Seed_Fund_Scheme.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "ENT-05",
+  "scheme_name": "Uttar Pradesh MSME Policy & Vishwakarma Shram Samman Yojana",
+  "beneficiary_groups": [
+   "entrepreneur"
+  ],
+  "states": [
+   "Uttar Pradesh"
+  ],
+  "benefit": "UP state support for new micro and small units and traditional artisans: margin-money grant, interest subsidy, training and toolkits",
+  "rules": [
+   {
+    "field": "occupation",
+    "op": "==",
+    "value": "entrepreneur",
+    "text": "Artisan or new micro/small entrepreneur"
+   },
+   {
+    "field": "age",
+    "op": ">=",
+    "value": 18,
+    "text": "Age above 18 years"
+   }
+  ],
+  "required_documents": [
+   "Aadhaar card",
+   "UP domicile certificate",
+   "Bank account details",
+   "Project details"
+  ],
+  "official_url": "https://msme.up.gov.in/",
+  "source_url": "https://startinup.up.gov.in/crm/assets/admin/Government_Order/1625032266.pdf",
+  "verification_status": "needs_review"
+ },
+ {
+  "scheme_id": "ENT-06",
+  "scheme_name": "Chief Minister Employment Generation Programme (CMEGP), Maharashtra",
+  "beneficiary_groups": [
+   "entrepreneur"
+  ],
+  "states": [
+   "Maharashtra"
+  ],
+  "benefit": "Bank loan with 15-35% government subsidy for new manufacturing or service units in Maharashtra",
+  "rules": [
+   {
+    "field": "occupation",
+    "op": "==",
+    "value": "entrepreneur",
+    "text": "Starting a new manufacturing or service unit"
+   },
+   {
+    "field": "age",
+    "op": ">=",
+    "value": 18,
+    "text": "Age 18 to 45 years"
+   },
+   {
+    "field": "age",
+    "op": "<=",
+    "value": 50,
+    "text": "Age up to 45 years (up to 50 for SC/ST, women, ex-servicemen, disabled)"
+   }
+  ],
+  "required_documents": [
+   "Aadhaar card",
+   "Domicile certificate",
+   "Education certificate",
+   "Project report"
+  ],
+  "official_url": "https://maha-cmegp.gov.in/",
+  "source_url": "https://industry.maharashtra.gov.in/sites/default/files/2025-09/maharashtra-new-industrial-policy-2019-english.pdf",
+  "verification_status": "needs_review"
+ }
 ]
