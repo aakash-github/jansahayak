@@ -21,7 +21,7 @@ try:
     if (DATA / "embeddings.npy").exists():
         _vectors = np.load(DATA / "embeddings.npy")
     from fastembed.rerank.cross_encoder import TextCrossEncoder
-    _reranker = TextCrossEncoder(RERANK_MODEL)
+    _reranker = TextCrossEncoder(RERANK_MODEL, threads=1)  # 1 thread keeps memory low on Render free (512 MB)
 except Exception as e:  # keep the app alive on small hosts
     print("dense/rerank disabled:", e)
 
@@ -49,6 +49,7 @@ def search(query: str, scheme_ids: list[str] | None = None, k: int = 4) -> list[
             print("dense search skipped:", e)
     cand = _rrf(rankings)[:12]
     if _reranker is not None and cand:
-        scores = list(_reranker.rerank(query, [CHUNKS[i]["text"] for i in cand]))
+        # small batches + first ~1500 chars of each chunk: scoring 12 full chunks at once used ~270 MB
+        scores = list(_reranker.rerank(query, [CHUNKS[i]["text"][:1500] for i in cand], batch_size=2))
         cand = [i for _, i in sorted(zip(scores, cand), reverse=True)]
     return [CHUNKS[i] for i in cand[:k]]

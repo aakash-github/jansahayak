@@ -22,6 +22,9 @@ CA_CERT = os.getenv("EMBED_CA_CERT_PATH", "")       # path to vm02-ca.crt
 API_MODEL = os.getenv("EMBED_MODEL", "bge-small-en-v1.5")
 LOCAL_MODEL = "BAAI/bge-small-en-v1.5"
 BATCH = 16
+# Render free tier has 512 MB; loading the local model there (+150 MB) can crash the server.
+# Set EMBED_LOCAL_FALLBACK=0 on Render: if the API is down, search falls back to keywords (BM25) only.
+LOCAL_FALLBACK = os.getenv("EMBED_LOCAL_FALLBACK", "1") != "0"
 
 _local = None
 last_source = "none"  # "api" or "local", handy for /health and debugging
@@ -62,7 +65,9 @@ def embed(texts: list[str], timeout: float = 10) -> np.ndarray:
             last_source = "api"
             return v
         except Exception as e:
-            print("embedding API failed, using local model:", type(e).__name__, e)
+            print("embedding API failed:", type(e).__name__, e)
+            if not LOCAL_FALLBACK:
+                raise
     v = _local_embed(texts)
     last_source = "local"
     return v
