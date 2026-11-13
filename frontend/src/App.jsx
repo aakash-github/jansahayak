@@ -14,7 +14,14 @@ const EXAMPLES = [
   'Starting a food processing business in Maharashtra, age 28',
   'मैं बिहार का किसान हूँ, 1 एकड़ ज़मीन, उम्र 40',
 ]
-const FOLLOWUPS = ['What documents do I need?', 'How do I apply?', 'Explain the benefits simply']
+// Questions about the schemes on screen. With several cards we first ask "Which scheme?" (on the phone, no server call).
+const FOLLOWUPS = { en: ['How do I apply?', 'What documents do I need?', 'Explain the benefits simply'],
+  hi: ['आवेदन कैसे करें?', 'कौन से दस्तावेज़ चाहिए?', 'लाभ आसान भाषा में समझाइए'] }
+// What the per-card buttons send, e.g. "How do I apply for PM-KISAN?"
+const CARD_ASK = {
+  en: { apply: (n) => `How do I apply for ${n}?`, docs: (n) => `What documents do I need for ${n}?` },
+  hi: { apply: (n) => `${n} के लिए आवेदन कैसे करें?`, docs: (n) => `${n} के लिए कौन से दस्तावेज़ चाहिए?` },
+}
 const STATUS = {
   potentially_eligible: { label: 'May be eligible', cls: 'ok', icon: '✓' },
   more_info_needed: { label: 'Need more info', cls: 'warn', icon: '?' },
@@ -32,6 +39,7 @@ const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width:
 const fmt = (k, v) => k === 'annual_income' ? `₹${Number(v).toLocaleString('en-IN')}`
   : typeof v === 'boolean' ? (v ? 'Yes' : 'No')
   : k === 'category' ? String(v).toUpperCase()
+  : k === 'occupation' ? ({ farmer: 'Farmer', student: 'Student', entrepreneur: 'Business' }[v] || v)
   : String(v).charAt(0).toUpperCase() + String(v).slice(1)
 
 function Hero() {
@@ -55,12 +63,14 @@ function Hero() {
 }
 
 function Bubble({ text }) {
-  // turn [S1] into small citation pills and **text** into bold
-  const parts = text.split(/(\[S\d+\]|\*\*[^*]+\*\*)/g)
+  // [S1] -> citation pill, **text** -> bold, links (plain or [text](url)) -> clickable
+  const clean = text.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '$2')
+  const parts = clean.split(/(\[S\d+\]|\*\*[^*]+\*\*|https?:\/\/[^\s)]+)/g)
   return (
     <div className="bubble">
       {parts.map((p, i) => /^\[S\d+\]$/.test(p) ? <sup key={i} className="cite">{p.slice(1, -1)}</sup>
-        : /^\*\*[^*]+\*\*$/.test(p) ? <b key={i}>{p.slice(2, -2)}</b> : p)}
+        : /^\*\*[^*]+\*\*$/.test(p) ? <b key={i}>{p.slice(2, -2)}</b>
+        : /^https?:\/\//.test(p) ? <a key={i} href={p.replace(/[.,]$/, '')} target="_blank" rel="noreferrer">{p}</a> : p)}
     </div>
   )
 }
@@ -70,10 +80,13 @@ const isHindi = (t) => /[ऀ-ॿ]/.test(t || '')
 /** One smart follow-up question with tap-to-answer buttons (or a dropdown for long lists like states). */
 function FollowUp({ f, blocking, onPick, onSkip }) {
   const hi = isHindi(f.question)
-  const helps = f.helps > 0 && (hi ? `इससे ${f.helps} और योजना की जाँच होगी` : `checks ${f.helps} more scheme${f.helps > 1 ? 's' : ''}`)
+  const names = f.helps_names?.length ? f.helps_names.join(', ') + (f.helps > f.helps_names.length ? ` +${f.helps - f.helps_names.length}` : '') : ''
   return (
     <div className={`followup ${blocking ? 'blocking' : ''}`}>
-      {!blocking && <p>💡 <b>{f.question}</b>{helps && <small> · {helps}</small>}</p>}
+      {!blocking && (
+        <p>💡 {f.why && <span>{f.why} </span>}<b>{f.question}</b>
+          {names && <small className="helps">{hi ? 'इनकी जाँच होगी: ' : 'Helps check: '}{names}</small>}</p>
+      )}
       {f.options.length > 8 ? (
         <select defaultValue="" onChange={(e) => e.target.value !== '' && onPick(f.options[e.target.value])}>
           <option value="" disabled>{hi ? 'चुनें…' : 'Choose…'}</option>
@@ -90,8 +103,10 @@ function FollowUp({ f, blocking, onPick, onSkip }) {
   )
 }
 
-function SchemeCard({ s }) {
+function SchemeCard({ s, onAsk, hi }) {
   const st = STATUS[s.status]
+  const ask = CARD_ASK[hi ? 'hi' : 'en']
+  const name = s.short_name || s.name
   return (
     <article className={`scheme ${st.cls}`}>
       <header>
@@ -106,7 +121,11 @@ function SchemeCard({ s }) {
         <summary>📄 Documents to keep ready ({s.documents.length})</summary>
         <ul className="docs">{s.documents.map((d) => <li key={d}>{d}</li>)}</ul>
       </details>
-      <a className="apply" href={s.link} target="_blank" rel="noreferrer">Visit official site →</a>
+      <div className="card-actions">
+        {onAsk && <button className="act" onClick={() => onAsk(ask.apply(name), s.scheme_id)}>📝 {hi ? 'आवेदन कैसे करें' : 'How to apply'}</button>}
+        {onAsk && <button className="act" onClick={() => onAsk(ask.docs(name), s.scheme_id)}>📄 {hi ? 'दस्तावेज़' : 'Documents'}</button>}
+        <a className="apply" href={s.link} target="_blank" rel="noreferrer">{hi ? 'आधिकारिक साइट' : 'Official site'} →</a>
+      </div>
     </article>
   )
 }
@@ -117,6 +136,7 @@ export default function App() {
   const [profile, setProfile] = useState({})
   const [labels, setLabels] = useState({}) // button text for tapped answers, e.g. "Up to ₹2.5 lakh"
   const [skipped, setSkipped] = useState(-1) // index of the bot message whose follow-up was skipped
+  const [chooser, setChooser] = useState(null) // generic question waiting for "Which scheme?" pick
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [slow, setSlow] = useState(false)
@@ -138,8 +158,9 @@ export default function App() {
   }
 
   // `set` comes from a tapped answer button: the backend stores it directly (faster, no AI guess)
-  async function send(text, set = null) {
+  async function send(text, set = null, schemeId = null) {
     if (!text.trim() || busy) return
+    setChooser(null)
     const voice = viaVoice.current
     viaVoice.current = false
     stopSpeaking(); setSpeaking(null)
@@ -148,7 +169,7 @@ export default function App() {
     setInput(''); setBusy(true); setSlow(false)
     const timer = setTimeout(() => setSlow(true), 8000)
     try {
-      const r = await sendMessage(sid, text, set)
+      const r = await sendMessage(sid, text, set, schemeId)
       setSid(r.session_id); setProfile(r.profile || {}); setLabels(r.profile_labels || {})
       const bot = { role: 'bot', text: r.message, schemes: r.schemes, sources: r.sources, asOf: r.data_as_of, followup: r.followup, blocking: r.needs_followup }
       setMsgs((m) => [...m, bot])
@@ -164,6 +185,16 @@ export default function App() {
   const last = msgs[msgs.length - 1]
   const lastIdx = msgs.length - 1
   const activeFollowup = !busy && last?.role === 'bot' && last.followup && skipped !== lastIdx ? last.followup : null
+  const chatHi = isHindi([...msgs].reverse().find((m) => m.role === 'bot')?.text)
+  // generic question ("How do I apply?"): one card -> ask about it; several -> "Which scheme?" buttons first
+  function askGeneric(q) {
+    const cards = last?.schemes || []
+    if (cards.length === 1) return send(q, null, cards[0].scheme_id)
+    setChooser({
+      q, field: 'scheme', question: chatHi ? 'किस योजना के बारे में?' : 'Which scheme do you mean?', helps: 0, helps_names: [],
+      options: cards.map((s) => ({ label: s.short_name || s.name, scheme_id: s.scheme_id })),
+    })
+  }
 
   return (
     <div className="page">
@@ -220,7 +251,7 @@ export default function App() {
                         {speaking === i ? '⏹ Stop' : '🔊 Listen'}
                       </button>
                     )}
-                    {m.schemes?.length > 0 && <div className="schemes">{m.schemes.map((s) => <SchemeCard key={s.scheme_id} s={s} />)}</div>}
+                    {m.schemes?.length > 0 && <div className="schemes">{m.schemes.map((s) => <SchemeCard key={s.scheme_id} s={s} hi={isHindi(m.text)} onAsk={busy ? null : (q, id) => send(q, null, id)} />)}</div>}
                     {m.sources?.length > 0 && (
                       <div className="sources">
                         <b>Sources</b>
@@ -236,14 +267,19 @@ export default function App() {
                   <div className="bubble typing"><i /><i /><i />{slow && <small>Waking up the server, this can take up to a minute…</small>}</div>
                 </div>
               )}
-              {activeFollowup && (
+              {chooser && !busy ? (
                 <div className="follow">
-                  <FollowUp f={activeFollowup} blocking={last.blocking}
-                    onPick={(o) => send(o.label, o.set)} onSkip={() => setSkipped(lastIdx)} />
+                  <FollowUp f={chooser} onSkip={() => setChooser(null)}
+                    onPick={(o) => send(`${chooser.q} (${o.label})`, null, o.scheme_id)} />
+                </div>
+              ) : activeFollowup && (
+                <div className="follow">
+                  <FollowUp f={activeFollowup} blocking={last.blocking} onSkip={() => setSkipped(lastIdx)}
+                    onPick={(o) => send(o.label, o.set && Object.keys(o.set).length ? o.set : null, o.scheme_id || null)} />
                 </div>
               )}
-              {!busy && !activeFollowup && last?.role === 'bot' && last.schemes?.length > 0 && (
-                <div className="chips follow">{FOLLOWUPS.map((f) => <button key={f} className="chip" onClick={() => send(f)}>{f}</button>)}</div>
+              {!busy && !chooser && last?.role === 'bot' && last.schemes?.length > 0 && (
+                <div className="chips follow">{FOLLOWUPS[chatHi ? 'hi' : 'en'].map((f) => <button key={f} className="chip" onClick={() => askGeneric(f)}>{f}</button>)}</div>
               )}
               <div ref={end} />
             </section>
@@ -283,7 +319,7 @@ export default function App() {
             <h4>👤 Your details</h4>
             {Object.keys(profile).length === 0
               ? <p className="muted">Nothing yet. As you chat, the details we understand appear here.</p>
-              : <dl>{Object.entries(profile).map(([k, v]) => <div key={k}><dt>{LABELS[k] || k.replace('_', ' ')}</dt><dd>{labels[k] || fmt(k, v)}</dd></div>)}</dl>}
+              : <dl>{Object.entries(profile).map(([k, v]) => <div key={k}><dt>{LABELS[k] || k.replace('_', ' ')}</dt><dd>{(k !== 'occupation' && labels[k]) || fmt(k, v)}</dd></div>)}</dl>}
             <p className="muted small">Kept only for this session. “New chat” clears it.</p>
           </div>
           <div className="panel">

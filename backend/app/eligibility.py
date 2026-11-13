@@ -17,6 +17,9 @@ def _check(rule: dict, profile: dict) -> str:
         return "unknown"
     op, target = rule["op"], rule["value"]
     try:
+        if op == "between":  # inclusive range, e.g. age [18, 40]
+            lo, hi = target
+            return "met" if float(lo) <= float(v) <= float(hi) else "not_met"
         if op == "contains_any":  # free text like course / business type: "B.Tech CSE" matches "b.tech"
             return "met" if any(str(t).lower() in str(v).lower() for t in target) else "not_met"
         if op == "in":
@@ -68,3 +71,14 @@ def documents_for(scheme_id: str) -> list[str]:
 def apply_link(scheme_id: str) -> str:
     """Tool 4: official apply / info link."""
     return BY_ID[scheme_id].get("official_url", "https://www.myscheme.gov.in/")
+
+
+def match_scheme(text: str) -> str | None:
+    """Scheme ID named in a message ('how do I apply for kisan credit card' -> FARM-03), longest alias wins."""
+    t = text.lower()
+    best, best_len = None, 0
+    for s in SCHEMES:
+        for alias in s.get("aliases", []) + [s["scheme_name"].lower()]:
+            if alias.lower() in t and len(alias) > best_len:
+                best, best_len = s["scheme_id"], len(alias)
+    return best

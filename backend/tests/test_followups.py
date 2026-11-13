@@ -39,11 +39,11 @@ def _walk(group, choose, extra=None):
     profile, asked = {"occupation": group, **(extra or {})}, ["occupation"]
     for _ in range(ASK_LIMIT + 1):
         results = E.find_schemes(profile, limit=100)
-        field, _helps = F.pick(results, asked, group)
+        field, _ids = F.pick(results, asked, group)
         if not field:
             return profile, asked, results
         asked.append(field)
-        opts = F.build(field, "en", 0, group)["options"]
+        opts = F.build(field, "en", _ids, group)["options"]
         if opts and choose != "skip":
             profile.update(choose(opts)["set"])
         elif F.Q[field].get("input") == "number" and choose != "skip":
@@ -70,6 +70,11 @@ def test_conversations_end_and_nothing_left_unasked():
         for strategy in ["skip", lambda o: o[0], lambda o: o[-1]] + [lambda o: random.choice(o)] * 300:
             profile, asked, results = _walk(group, strategy)
             stuck = _stuck(results, asked, group)
+            # personal questions (gender, category, disability) are only asked when they settle 2+ schemes
+            per = {}
+            for sid, f in set(stuck):
+                per.setdefault(f, set()).add(sid)
+            stuck = [x for x in stuck if x[1] not in F.PERSONAL or len(per[x[1]]) >= 2]
             if len(asked) - 1 >= F.SOFT_LIMIT:  # past the soft limit we only ask details that settle 2+ schemes
                 per_field = {}
                 for sid, f in set(stuck):
@@ -81,15 +86,16 @@ def test_conversations_end_and_nothing_left_unasked():
 
 def test_every_scheme_reachable():
     """Every scheme should be able to reach 'May be eligible' for some combination of answers.
-    (Run without the soft limit: past it, users can still type details like "I'm in a women SHG".)"""
+    (Run without the asking limits: users can still type details like "I'm a girl" or "I'm in a women SHG".)"""
     random.seed(2)
     saved, F.SOFT_LIMIT = F.SOFT_LIMIT, 99
+    saved_personal, F.PERSONAL = F.PERSONAL, set()  # e.g. "girl"/"woman" is usually typed, not asked
     reached = set()
     for group in GROUPS:
         for _ in range(3000):
             profile, _, results = _walk(group, lambda o: random.choice(o))
             reached |= {r["scheme_id"] for r in results if r["status"] == "potentially_eligible"}
-    F.SOFT_LIMIT = saved
+    F.SOFT_LIMIT, F.PERSONAL = saved, saved_personal
     never = {s["scheme_id"] for s in E.SCHEMES} - reached
     assert not never, f"schemes that can never show 'May be eligible': {sorted(never)}"
 
@@ -99,6 +105,15 @@ def test_state_only_schemes_hidden_for_other_states():
         res = E.find_schemes({"occupation": group, "state": state}, limit=100)
         for r in res:
             assert E.BY_ID[r["scheme_id"]]["states"] == ["All India"], (state, r["scheme_id"])
+
+
+def test_scheme_names_and_matching():
+    """Every scheme has a button-sized name and is found when a user types its name or alias."""
+    for s in E.SCHEMES:
+        assert s.get("short_name") and len(s["short_name"]) <= 26, s["scheme_id"]
+        for alias in s.get("aliases", []):
+            assert E.match_scheme(f"how do I apply for {alias}?") == s["scheme_id"], (alias, s["scheme_id"])
+    assert E.match_scheme("how do I apply?") is None
 
 
 if __name__ == "__main__":

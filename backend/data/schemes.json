@@ -30,7 +30,14 @@
   ],
   "official_url": "https://pmkisan.gov.in/",
   "source_url": "https://pmkisan.gov.in/Documents/RevisedPM-KISANOperationalGuidelines(English).pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "PM-KISAN",
+  "aliases": [
+   "pm-kisan",
+   "pm kisan",
+   "kisan samman",
+   "किसान सम्मान"
+  ]
  },
  {
   "scheme_id": "FARM-02",
@@ -58,7 +65,14 @@
   ],
   "official_url": "https://pmfby.gov.in/",
   "source_url": "https://agri.odisha.gov.in/sites/default/files/2025-03/operational_guidelines_pmfby.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "PMFBY (crop insurance)",
+  "aliases": [
+   "pmfby",
+   "fasal bima",
+   "crop insurance",
+   "फसल बीमा"
+  ]
  },
  {
   "scheme_id": "FARM-03",
@@ -92,7 +106,13 @@
   ],
   "official_url": "https://www.dahd.gov.in/en/division/kcc",
   "source_url": "https://financialservices.gov.in/sites/default/files/order-notices/F.NO%252003272011-AC.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "Kisan Credit Card",
+  "aliases": [
+   "kcc",
+   "kisan credit",
+   "किसान क्रेडिट"
+  ]
  },
  {
   "scheme_id": "STU-01",
@@ -132,7 +152,13 @@
   ],
   "official_url": "https://scholarships.gov.in/",
   "source_url": "https://scholarships.gov.in/public/schemeGuidelines/FAQ_DOHE_CSSS.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "CSSS scholarship",
+  "aliases": [
+   "csss",
+   "central sector scheme of scholarship",
+   "pm-usp"
+  ]
  },
  {
   "scheme_id": "STU-02",
@@ -193,7 +219,12 @@
   ],
   "official_url": "https://scholarships.gov.in/",
   "source_url": "https://scholarships.gov.in/public/schemeGuidelines/AICTE/AICTE_2010_G.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "AICTE Pragati",
+  "aliases": [
+   "pragati",
+   "प्रगति"
+  ]
  },
  {
   "scheme_id": "STU-03",
@@ -254,7 +285,12 @@
   ],
   "official_url": "https://scholarships.gov.in/",
   "source_url": "https://scholarships.gov.in/public/schemeGuidelines/AICTE/AICTE_2013_G.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "AICTE Saksham",
+  "aliases": [
+   "saksham",
+   "सक्षम"
+  ]
  },
  {
   "scheme_id": "ENT-01",
@@ -288,7 +324,13 @@
   ],
   "official_url": "https://www.kviconline.gov.in/pmegpeportal/",
   "source_url": "https://msme1connect.up.gov.in/GovernmentScheme/GovernmentScheme638740881655062171.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "PMEGP",
+  "aliases": [
+   "pmegp",
+   "employment generation programme",
+   "prime minister's employment"
+  ]
  },
  {
   "scheme_id": "ENT-02",
@@ -315,7 +357,12 @@
   ],
   "official_url": "https://www.cgtmse.in/",
   "source_url": "https://msme.gov.in/static/uploads/2025/07/8d74a66bbbb265a325c8501ba50bf365.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "CGTMSE",
+  "aliases": [
+   "cgtmse",
+   "credit guarantee"
+  ]
  },
  {
   "scheme_id": "FARM-04",
@@ -336,15 +383,12 @@
    },
    {
     "field": "age",
-    "op": ">=",
-    "value": 18,
+    "op": "between",
+    "value": [
+     18,
+     40
+    ],
     "text": "Entry age 18 to 40 years"
-   },
-   {
-    "field": "age",
-    "op": "<=",
-    "value": 40,
-    "text": "Entry age not above 40 years"
    },
    {
     "field": "land_acres",
@@ -360,7 +404,17 @@
   ],
   "official_url": "https://maandhan.in/",
   "source_url": "https://agriwelfare.gov.in/sites/default/files/OG-PMKMY_ENG.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "PM-KMY (pension)",
+  "aliases": [
+   "pm-kmy",
+   "pmkmy",
+   "maan-dhan",
+   "maandhan",
+   "maan dhan",
+   "kisan pension",
+   "मानधन"
+  ]
  },
  {
   "scheme_id": "FARM-05",
@@ -394,7 +448,16 @@
   ],
   "official_url": "https://pmksy.gov.in/",
   "source_url": "https://pmksy.gov.in/microirrigation/Archive/Revised_PDMC_Operational_Guidelines2023.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "Per Drop More Crop",
+  "aliases": [
+   "pdmc",
+   "per drop",
+   "drip",
+   "sprinkler",
+   "micro irrigation",
+   "ड्रिप"
+  ]
  },
  {
   "scheme_id": "FARM-06",
@@ -422,7 +485,14 @@
   ],
   "official_url": "https://agrimachinery.nic.in/",
   "source_url": "https://farmech.dac.gov.in/Content/New_Folder/Revised_SMAM_Guidelines_%282025%29_With_Covering.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "SMAM (farm machinery)",
+  "aliases": [
+   "smam",
+   "farm machinery",
+   "tractor subsidy",
+   "agricultural mechani"
+  ]
  },
  {
   "scheme_id": "FARM-07",
@@ -455,7 +525,13 @@
   ],
   "official_url": "https://lakhpatididi.gov.in/",
   "source_url": "https://farmech.dac.gov.in/Content/New_Folder/Operational_Guidelines_of_Namo_Drone_Didi_Scheme.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "Namo Drone Didi",
+  "aliases": [
+   "namo drone",
+   "drone didi",
+   "ड्रोन दीदी"
+  ]
  },
  {
   "scheme_id": "FARM-08",
@@ -481,7 +557,13 @@
   ],
   "official_url": "https://soilhealth.dac.gov.in/",
   "source_url": "https://soilhealth.dac.gov.in/files/documents/Guidelines_for_Demonstrations_under_SHC_Scheme.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "Soil Health Card",
+  "aliases": [
+   "soil health",
+   "soil test",
+   "मृदा स्वास्थ्य"
+  ]
  },
  {
   "scheme_id": "FARM-09",
@@ -511,15 +593,12 @@
    },
    {
     "field": "age",
-    "op": ">=",
-    "value": 18,
+    "op": "between",
+    "value": [
+     18,
+     60
+    ],
     "text": "Age 18 to 60 years"
-   },
-   {
-    "field": "age",
-    "op": "<=",
-    "value": 60,
-    "text": "Age not above 60 years"
    }
   ],
   "required_documents": [
@@ -530,7 +609,16 @@
   ],
   "official_url": "https://www.acabcmis.gov.in/",
   "source_url": "https://agriwelfare.gov.in/sites/default/files/ACABC_Revised_compendium_301225.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "Agri-Clinics (AC&ABC)",
+  "aliases": [
+   "ac&abc",
+   "acabc",
+   "agri-clinic",
+   "agri clinic",
+   "agri-business centre",
+   "agribusiness centre"
+  ]
  },
  {
   "scheme_id": "FARM-10",
@@ -557,7 +645,13 @@
   ],
   "official_url": "https://midh.gov.in/",
   "source_url": "https://nhb.gov.in/writereaddata/MIDH_Guidelines.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "MIDH (horticulture)",
+  "aliases": [
+   "midh",
+   "horticulture",
+   "बागवानी"
+  ]
  },
  {
   "scheme_id": "STU-04",
@@ -612,7 +706,12 @@
   ],
   "official_url": "https://scholarships.gov.in/",
   "source_url": "https://scholarships.gov.in/public/schemeGuidelines/AICTE/AICTE_3038_G.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "AICTE Swanath",
+  "aliases": [
+   "swanath",
+   "स्वनाथ"
+  ]
  },
  {
   "scheme_id": "STU-05",
@@ -651,7 +750,14 @@
   ],
   "official_url": "https://scholarships.gov.in/",
   "source_url": "https://scholarships.gov.in/public/schemeGuidelines/POST_MATRIC_OBC_GUIDELINES.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "PM-YASASVI",
+  "aliases": [
+   "yasasvi",
+   "यशस्वी",
+   "post-matric scholarship for obc",
+   "post matric obc"
+  ]
  },
  {
   "scheme_id": "STU-06",
@@ -686,7 +792,13 @@
   ],
   "official_url": "https://scholarships.gov.in/",
   "source_url": "https://scholarships.gov.in/public/schemeGuidelines/EDUPostMatricScholarshipPMSforSTstudents.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "Post-Matric ST",
+  "aliases": [
+   "post-matric scholarship for st",
+   "post matric st",
+   "pms-st"
+  ]
  },
  {
   "scheme_id": "STU-07",
@@ -727,7 +839,12 @@
   ],
   "official_url": "https://scholarships.gov.in/",
   "source_url": "https://scholarships.gov.in/public/schemeGuidelines/Top_Class_Education_Scheme_2018.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "Top Class (SC)",
+  "aliases": [
+   "top class education scheme for sc",
+   "top class sc"
+  ]
  },
  {
   "scheme_id": "STU-08",
@@ -772,7 +889,12 @@
   ],
   "official_url": "https://scholarships.gov.in/",
   "source_url": "https://scholarships.gov.in/public/schemeGuidelines/ApprovedmodifieddraftofTopClassCollege.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "Top Class (OBC/EBC/DNT)",
+  "aliases": [
+   "top class education in college",
+   "top class obc"
+  ]
  },
  {
   "scheme_id": "STU-09",
@@ -806,7 +928,14 @@
   ],
   "official_url": "https://scholarships.gov.in/",
   "source_url": "https://scholarships.gov.in/public/schemeGuidelines/DEPDGuidelines.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "Disability scholarships",
+  "aliases": [
+   "depwd",
+   "students with disabilities",
+   "disability scholarship",
+   "दिव्यांग छात्रवृत्ति"
+  ]
  },
  {
   "scheme_id": "STU-10",
@@ -840,7 +969,14 @@
   ],
   "official_url": "https://scholarships.gov.in/",
   "source_url": "https://scholarships.gov.in/public/schemeGuidelines/NMMSSGuidelines.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "NMMSS",
+  "aliases": [
+   "nmmss",
+   "nmms",
+   "means-cum-merit",
+   "means cum merit"
+  ]
  },
  {
   "scheme_id": "STU-11",
@@ -876,7 +1012,12 @@
   ],
   "official_url": "https://scholarships.gov.in/",
   "source_url": "https://scholarships.gov.in/public/schemeGuidelines/ISHAN_UDAY_GUIDELINE.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "Ishan Uday",
+  "aliases": [
+   "ishan uday",
+   "ईशान उदय"
+  ]
  },
  {
   "scheme_id": "STU-12",
@@ -916,7 +1057,12 @@
   ],
   "official_url": "https://online-inspire.gov.in/",
   "source_url": "https://www.online-inspire.gov.in/Content/SHEFAQs.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "INSPIRE-SHE",
+  "aliases": [
+   "inspire",
+   "she scholarship"
+  ]
  },
  {
   "scheme_id": "ENT-03",
@@ -964,7 +1110,12 @@
   ],
   "official_url": "https://pmfme.mofpi.gov.in/",
   "source_url": "https://pmfme.mofpi.gov.in/newsletters/docs/SchemeGuidelines.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "PMFME (food processing)",
+  "aliases": [
+   "pmfme",
+   "micro food processing"
+  ]
  },
  {
   "scheme_id": "ENT-04",
@@ -997,7 +1148,12 @@
   ],
   "official_url": "https://seedfund.startupindia.gov.in/",
   "source_url": "https://seedfundapi.startupindia.gov.in:3535/filestorage/samplefiles/Guidelines_for_Startup_India_Seed_Fund_Scheme.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "Startup India Seed Fund",
+  "aliases": [
+   "sisfs",
+   "seed fund"
+  ]
  },
  {
   "scheme_id": "ENT-05",
@@ -1031,7 +1187,13 @@
   ],
   "official_url": "https://msme.up.gov.in/",
   "source_url": "https://startinup.up.gov.in/crm/assets/admin/Government_Order/1625032266.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "UP Vishwakarma / MSME",
+  "aliases": [
+   "vishwakarma",
+   "विश्वकर्मा",
+   "up msme"
+  ]
  },
  {
   "scheme_id": "ENT-06",
@@ -1052,15 +1214,12 @@
    },
    {
     "field": "age",
-    "op": ">=",
-    "value": 18,
-    "text": "Age 18 to 45 years"
-   },
-   {
-    "field": "age",
-    "op": "<=",
-    "value": 50,
-    "text": "Age up to 45 years (up to 50 for SC/ST, women, ex-servicemen, disabled)"
+    "op": "between",
+    "value": [
+     18,
+     50
+    ],
+    "text": "Age 18 to 45 years (up to 50 for SC/ST, women, ex-servicemen, disabled)"
    }
   ],
   "required_documents": [
@@ -1071,6 +1230,11 @@
   ],
   "official_url": "https://maha-cmegp.gov.in/",
   "source_url": "https://industry.maharashtra.gov.in/sites/default/files/2025-09/maharashtra-new-industrial-policy-2019-english.pdf",
-  "verification_status": "needs_review"
+  "verification_status": "needs_review",
+  "short_name": "CMEGP (Maharashtra)",
+  "aliases": [
+   "cmegp",
+   "chief minister employment"
+  ]
  }
 ]

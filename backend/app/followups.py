@@ -120,36 +120,62 @@ NON_STUDENT = {
 # After this many follow-ups, only ask when one answer settles 2+ schemes (rare scholarships each need
 # their own yes/no detail; asking all of them one by one gets tiring).
 SOFT_LIMIT = 3
+# Personal questions are only worth asking when they settle 2+ schemes, and always come with a reason.
+PERSONAL = {"gender", "category", "disability"}
+WHY = {
+    "gender": {"en": "Some schemes are only for women.", "hi": "कुछ योजनाएँ केवल महिलाओं के लिए हैं।"},
+    "category": {"en": "Many scholarships depend on category.", "hi": "कई छात्रवृत्तियाँ वर्ग पर निर्भर करती हैं।"},
+    "disability": {"en": "Some schemes are for people with disabilities.", "hi": "कुछ योजनाएँ दिव्यांग लोगों के लिए हैं।"},
+}
 
 
-def pick(results: list[dict], asked: list[str], occupation: str = "") -> tuple[str | None, int]:
-    """The unknown detail that appears in the most 'Need more info' schemes, and how many it affects."""
-    count: dict[str, int] = {}
-    first: dict[str, int] = {}  # position of the highest-ranked scheme that needs this detail
-    for pos, r in enumerate(results):
+def short_name(scheme_id: str) -> str:
+    """Button-sized scheme name from schemes.json (e.g. 'PM-KMY (pension)')."""
+    from .eligibility import BY_ID
+    return BY_ID[scheme_id].get("short_name") or BY_ID[scheme_id]["scheme_name"]
+
+
+def pick(results: list[dict], asked: list[str], occupation: str = "") -> tuple[str | None, list[str]]:
+    """The unknown detail that appears in the most 'Need more info' schemes, and the IDs of those schemes."""
+    ids: dict[str, list[str]] = {}
+    for r in results:
         if r["status"] != "more_info_needed":
             continue
         for f in {c["field"] for c in r["conditions"] if c["result"] == "unknown"}:
             if f in Q and f not in asked and f != "occupation" and (occupation == "student" or f not in STUDENT_ONLY):
-                count[f] = count.get(f, 0) + 1
-                first.setdefault(f, pos)
-    if not count:
-        return None, 0
+                ids.setdefault(f, []).append(r["scheme_id"])  # results are best-first, so ids[f][0] is the top card
+    pos = {r["scheme_id"]: i for i, r in enumerate(results)}
+    ids = {f: v for f, v in ids.items() if f not in PERSONAL or len(v) >= 2}
+    if not ids:
+        return None, []
     # most schemes settled first; then the one that helps the top card; then easy questions first
-    field = min(count, key=lambda f: (-count[f], first[f], PRIORITY.index(f) if f in PRIORITY else 99))
-    if len([a for a in asked if a != "occupation"]) >= SOFT_LIMIT and count[field] < 2:
-        return None, 0
-    return field, count[field]
+    field = min(ids, key=lambda f: (-len(ids[f]), pos[ids[f][0]], PRIORITY.index(f) if f in PRIORITY else 99))
+    if len([a for a in asked if a != "occupation"]) >= SOFT_LIMIT and len(ids[field]) < 2:
+        return None, []
+    return field, ids[field]
 
 
-def build(field: str, lang: str, helps: int = 0, occupation: str = "") -> dict:
+def build(field: str, lang: str, scheme_ids: list[str] | None = None, occupation: str = "") -> dict:
     """The follow-up as sent to the screen: question text + tap options in the chat language."""
     q = NON_STUDENT[field] if occupation != "student" and field in NON_STUDENT else Q[field]
     hi = lang == "hi"
+    scheme_ids = scheme_ids or []
     return {
         "field": field,
         "question": q["hi" if hi else "en"],
-        "helps": helps,  # how many shown schemes this answer would settle
+        "why": WHY.get(field, {}).get("hi" if hi else "en", ""),
+        "helps": len(scheme_ids),
+        "helps_names": [short_name(i) for i in scheme_ids[:3]],  # "Helps check: PM-KMY, KCC"
         "input": q.get("input"),
         "options": [{"label": o["label_hi" if hi else "label"], "set": o["set"]} for o in q["options"]],
+    }
+
+
+def which_scheme(scheme_ids: list[str], lang: str) -> dict:
+    """'Which scheme do you mean?' with one button per scheme on screen."""
+    return {
+        "field": "scheme",
+        "question": "किस योजना के बारे में?" if lang == "hi" else "Which scheme do you mean?",
+        "why": "", "helps": 0, "helps_names": [], "input": None,
+        "options": [{"label": short_name(i), "set": {}, "scheme_id": i} for i in scheme_ids],
     }

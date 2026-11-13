@@ -1,5 +1,6 @@
 """FastAPI backend. Holds the API key + CA cert; the React app only talks to this."""
 import os
+import re
 import uuid
 
 from fastapi import FastAPI
@@ -23,7 +24,27 @@ SESSIONS: dict[str, dict] = {}  # in-memory, cleared on reset/restart (no PII st
 class ChatIn(BaseModel):
     session_id: str | None = None
     message: str
-    set: dict | None = None  # values from a tapped answer button, e.g. {"category": "sc"}
+    set: dict | None = None        # values from a tapped answer button, e.g. {"category": "sc"}
+    scheme_id: str | None = None   # question about one scheme (card button or "Which scheme?" pick)
+
+
+def _new_session() -> dict:
+    return {"profile": {}, "asked": [], "lang": "en", "labels": {}, "last_ids": [], "pending": None}
+
+
+def _sources(evidence: list, answer: str) -> list:
+    """Only the sources the answer actually cites (same numbers as in the text), duplicates removed.
+    If the answer cites nothing, show the top 2 distinct ones so users can still check."""
+    cited = {int(n) for n in re.findall(r"\[S(\d+)\]", answer)}
+    out, seen = [], set()
+    for i, c in enumerate(evidence):
+        key = (c["title"], c.get("page"))
+        if (cited and i + 1 not in cited) or key in seen:
+            continue
+        seen.add(key)
+        out.append({"id": f"S{i+1}", "scheme_id": c["scheme_id"], "title": c["title"], "section": c["section"],
+                    "url": c["source_url"], "page": c.get("page")})
+    return out if cited else out[:2]
 
 
 @app.get("/health")
@@ -35,31 +56,42 @@ def health():
 @app.post("/api/chat")
 async def chat(body: ChatIn):
     sid = body.session_id or str(uuid.uuid4())
-    sess = SESSIONS.setdefault(sid, {"profile": {}, "asked": [], "lang": "en", "labels": {}})
+    sess = SESSIONS.setdefault(sid, _new_session())
+    message = body.message[:1000]
+    if body.scheme_id and sess["pending"]:  # answer to "Which scheme do you mean?": re-ask the original question
+        message = f"{sess['pending']} ({message})"
+    sess["pending"] = None
     if body.set:  # remember the button text so the details panel shows "Up to ₹2.5 lakh", not "250000"
         for k, v in body.set.items():
             sess["labels"][k] = [v, body.message[:60]]
     try:
-        out = await GRAPH.ainvoke({"message": body.message[:1000], "profile": sess["profile"], "preset": body.set,
+        out = await GRAPH.ainvoke({"message": message, "profile": sess["profile"], "preset": body.set,
+                                   "focus": body.scheme_id, "last_ids": sess["last_ids"],
                                    "asked": sess["asked"], "lang": sess["lang"], "steps": 0})
     except Exception as e:
         return {"session_id": sid, "message": f"Sorry, the AI service is busy right now ({type(e).__name__}). Please try again.",
                 "profile": sess["profile"], "profile_labels": {}, "schemes": [], "sources": [], "followup": None,
-                "needs_followup": False, "data_as_of": DATA_AS_OF}
+                "needs_followup": False, "mode": "error", "data_as_of": DATA_AS_OF}
     sess["profile"], sess["asked"] = out.get("profile", {}), out.get("asked", sess["asked"])
     sess["lang"] = out.get("lang", sess["lang"])
+    mode = out.get("mode", "find")
+    if mode == "find" and out.get("results"):
+        sess["last_ids"] = [r["scheme_id"] for r in out["results"]]  # what "How do I apply?" refers to next
+    if mode == "which":
+        sess["pending"] = message
     blocking = bool(out.get("blocking"))
     labels = {k: lab for k, (v, lab) in sess["labels"].items() if sess["profile"].get(k) == v}  # drop stale labels
+    answer = out.get("answer", "")
     return {
         "session_id": sid,
-        "message": out.get("answer", ""),
+        "message": answer,
+        "mode": mode,                      # find | focus | which
         "profile": sess["profile"],
         "profile_labels": labels,
-        "followup": out.get("followup"),   # {field, question, helps, input, options:[{label, set}]} or null
-        "needs_followup": blocking,        # True = no schemes yet, we must know the user group first
+        "followup": out.get("followup"),   # {field, question, why, helps_names, input, options:[{label, set, scheme_id?}]}
+        "needs_followup": blocking,        # True = no schemes in this reply (a question must be answered first)
         "schemes": [] if blocking else out.get("results", []),
-        "sources": [{"id": f"S{i+1}", "scheme_id": c["scheme_id"], "title": c["title"], "section": c["section"],
-                     "url": c["source_url"], "page": c.get("page")} for i, c in enumerate(out.get("evidence", []))],
+        "sources": _sources(out.get("evidence", []), answer),
         "data_as_of": DATA_AS_OF,
     }
 

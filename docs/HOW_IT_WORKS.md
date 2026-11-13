@@ -46,14 +46,27 @@ Everything is plain files inside the backend folder:
 
 When a user sends a message, it goes through these steps (called **agents** or **nodes**). The whole flow is built with **LangGraph**, a library for connecting steps like a flowchart.
 
+There are **three kinds of message**:
+
+| Kind | Example | What happens |
+|---|---|---|
+| **Find** | "I am a farmer in Bihar" | Check all schemes, show the top 5 as cards, short summary, maybe one follow-up question |
+| **About one scheme** | "How do I apply for PM-KISAN?", or the card buttons 📝 How to apply / 📄 Documents | Look only at that scheme and its own PDFs; answer just that question (steps, document list, or benefits); show that one card |
+| **Which scheme?** | "How do I apply?" while 5 cards are on screen | Ask "Which scheme do you mean?" with one button per card, then answer about the one picked |
+
+A scheme is recognised from its name or common short names (`aliases` in `schemes.json`, e.g. "kcc", "kisan credit", "फसल बीमा").
+
 ```mermaid
 flowchart TD
   M["User message"] --> I["1️⃣ Intake agent 🧠<br/>understand the user"]
   I -->|"not about schemes"| R["Polite refusal"]
   I -->|"don't know farmer / student / business yet"| Q["2️⃣ Ask that one question<br/>(with buttons)"]
+  I -->|"asks about one scheme"| F["Scheme tools:<br/>that scheme + its PDFs only"]
+  I -->|"'How do I apply?' with many cards"| WH["Which scheme?<br/>(buttons)"]
   I -->|"otherwise: always answer"| P["3️⃣ Planner"]
   P --> E["4️⃣ Executor: runs 4 tools"]
   E --> W["5️⃣ Answer agent 🧠<br/>write the reply"]
+  F --> W
   W --> C{"6️⃣ Critic<br/>is the reply safe?"}
   C -->|"problem found"| W
   C -->|"OK"| S["7️⃣ Suggest: pick at most ONE<br/>follow-up question + buttons"]
@@ -68,9 +81,9 @@ flowchart TD
 | 2 | **Ask** | ❌ | Only if we don't know whether the user is a farmer, student or business owner. This is the **only** question that holds back results. |
 | 3 | **Planner** | ❌ | Decides the order of tools. Today this is a fixed plan (always the same 4 tools). |
 | 4 | **Executor** | ❌ | Runs the 4 tools (below) |
-| 5 | **Answer** | ✅ | Turns tool results into a short, friendly reply with citations `[S1]` |
+| 5 | **Answer** | ✅ | Find: 2–4 sentences naming at most 2 schemes (the cards carry the details). About one scheme: only what was asked (numbered steps, a document list, or a short explanation). Citations `[S1]`; only cited sources are shown. |
 | 6 | **Critic** | ❌ | Checks the reply. If it is wrong, sends it back to step 5 (max 10 steps in total). |
-| 7 | **Suggest** | ❌ | Looks at the schemes just shown. If some say "Need more info", picks the **one** detail that would settle the most of them and shows it as a question with tap buttons. If nothing would change, asks nothing. |
+| 7 | **Suggest** | ❌ | After a "find" answer only. If some schemes say "Need more info", picks the **one** detail that would settle the most of them and shows it as a question with tap buttons, naming the schemes it helps ("Helps check: PM-KMY, KCC"). If nothing would change, asks nothing. |
 
 **The 4 tools the executor runs:**
 
@@ -89,6 +102,7 @@ flowchart TD
    - pick the biggest count; if tied, the one that helps the top card; then easier questions first
    - never ask the same thing twice in a chat; study questions only go to students (farmers get "agriculture degree?" instead)
    - after 3 follow-ups, only ask if one answer settles 2 or more schemes (so nobody gets 10 questions)
+   - personal questions (gender, category, disability) are asked only when they settle 2+ schemes, and always with a reason ("Many scholarships depend on category."). Otherwise we rely on the user mentioning it, e.g. "I'm a girl".
 3. Each question has **tap buttons**. Tapping sends the value straight to the backend (no AI call, so it's faster and can't be misread). Number answers use ranges whose edges match the scheme limits, e.g. income `Up to ₹2.5 lakh / ₹2.5–3.5 / ₹3.5–4.5 / ₹4.5–8 / more than ₹8 lakh`. Long lists (states) use a dropdown. Users can still type, or tap **Skip**.
 4. Telling everything in one message (e.g. *"Farmer in Bihar, 2 acres, age 30"*) usually means no question at all.
 

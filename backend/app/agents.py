@@ -1,11 +1,16 @@
-"""LangGraph workflow:
-intake -> (ask occupation | refuse | planner) -> executor -> answer -> critic -> (answer | suggest) -> END
+"""LangGraph workflow. Three kinds of turn:
 
-"Answer first, then improve": once we know farmer/student/business we always show schemes.
-The suggest step then offers at most ONE follow-up question (see followups.py).
+  find   : "I am a farmer in Bihar"          intake -> planner -> executor -> answer -> critic -> suggest
+  focus  : "How do I apply for PM-KISAN?"    intake -> scheme_tools (one scheme) -> answer -> critic -> suggest (no question)
+  which  : "How do I apply?" (5 on screen)   intake -> which ("Which scheme do you mean?" + buttons)
 
-Only 2 LLM calls per turn (intake + answer) because the key allows 1 request at a time.
-Planner, executor (tools) and critic are deterministic Python, which is how we
+Plus: ask (we don't know farmer/student/business yet) and refuse (not about schemes).
+
+"Answer first, then improve": once we know the user group we always show schemes; the suggest step
+offers at most ONE follow-up question (see followups.py).
+
+Only 2 LLM calls per turn (intake + answer) because the key allows 1 request at a time; tapped buttons
+skip the intake call. Planner, tools, critic and suggest are deterministic Python, which is how we
 compensate for the small 8B model.
 """
 import re
@@ -22,18 +27,24 @@ FIELDS = ["occupation", "state", "age", "annual_income", "gender", "category",
           # yes/no facts some schemes need; only filled when the user mentions them
           "shg_member", "class12_top20", "class12_top1", "top_institution", "school_student",
           "swanath_category", "dpiit_recognised"]
+
+
 class State(TypedDict, total=False):
     message: str
-    lang: str  # 'en' or 'hi', sticky for the chat
-    history: list
+    lang: str            # 'en' or 'hi', sticky for the chat
     profile: dict
     asked: list
     intent: str
-    preset: dict     # values from a tapped answer button: stored directly, no AI call
-    followup: dict   # the one question to show under the reply (or None)
-    blocking: bool   # True only for "farmer/student/business?" (no schemes shown yet)
-    results: list       # top 5 shown on screen
-    all_results: list   # every matching scheme (used to choose the follow-up question)
+    mode: str            # 'find' | 'focus' | 'which'
+    focus: str           # scheme ID the user is asking about (focus mode)
+    last_ids: list       # schemes shown in the previous 'find' answer (to resolve "How do I apply?")
+    preset: dict         # values from a tapped answer button: stored directly, no AI call
+    followup: dict       # the one question to show under the reply (or None)
+    blocking: bool       # True when no schemes are shown (farmer/student/business? or which scheme?)
+    results: list        # schemes shown on screen (top 5, or the one being asked about)
+    all_results: list    # every matching scheme (used to choose the follow-up question)
+    total: int           # how many schemes match in total
+    qtype: str           # focus questions: 'apply' | 'documents' | 'general'
     evidence: list
     answer: str
     critic_notes: str
@@ -42,6 +53,8 @@ class State(TypedDict, total=False):
 
 INTAKE_PROMPT = f"""You extract a citizen profile for an Indian government-scheme assistant.
 Return ONLY JSON: {{"intent": "find_schemes" | "scheme_question" | "out_of_scope", "profile": {{...}}}}
+intent: "scheme_question" when the user asks about applying, documents, benefits or details of schemes;
+"find_schemes" when they describe themselves or ask which schemes they can get.
 Profile keys (omit if not stated, never guess): {", ".join(FIELDS)}.
 occupation must be one of: farmer, student, entrepreneur. annual_income in rupees (3 lakh = 300000).
 course = what they study, e.g. "B.Tech", "diploma", "BA". state: full Indian state name.
@@ -62,6 +75,11 @@ OCCUPATION_WORDS = {
     "student": ["student", "b.tech", "btech", "college", "scholar", "छात्र", "विद्यार्थी"],
     "entrepreneur": ["business", "startup", "shop", "tailor", "msme", "व्यापार", "व्यवसाय", "दुकान", "उद्यम"],
 }
+# Words that tell us what the user wants to know about a scheme (used to steer document search).
+APPLY_WORDS = ["apply", "application", "register", "enrol", "enroll", "avail", "how to get", "how do i get",
+               "आवेदन", "अप्लाई", "पंजीकरण", "कैसे मिल", "कैसे करें"]
+DOC_WORDS = ["document", "papers", "certificate", "proof", "दस्तावेज", "दस्तावेज़", "कागज", "डॉक्यूमेंट"]
+QUESTION_WORDS = APPLY_WORDS + DOC_WORDS + ["benefit", "explain", "details", "what is", "लाभ", "फायदा", "बताइए", "समझाइए"]
 
 
 def _mock_intake(text: str) -> dict:
@@ -76,7 +94,8 @@ def _mock_intake(text: str) -> dict:
     for st in ["uttar pradesh", "bihar", "maharashtra", "west bengal", "karnataka", "tamil nadu"]:
         if st in t:
             p["state"] = st.title()
-    return {"intent": "find_schemes", "profile": p}
+    intent = "scheme_question" if any(w in t for w in QUESTION_WORDS) else "find_schemes"
+    return {"intent": intent, "profile": p}
 
 
 def _clean(values: dict) -> dict:
@@ -85,11 +104,28 @@ def _clean(values: dict) -> dict:
             if k in FIELDS and isinstance(v, (bool, int, float, str)) and len(str(v)) <= 60}
 
 
+def _mode(intent: str, message: str, focus: str | None, last_ids: list) -> tuple[str, str | None]:
+    """Decide find / focus / which. A named scheme always means focus."""
+    if focus and focus in eligibility.BY_ID:
+        return "focus", focus
+    named = eligibility.match_scheme(message)
+    if named:
+        return "focus", named
+    if intent == "scheme_question" and last_ids:
+        return ("focus", last_ids[0]) if len(last_ids) == 1 else ("which", None)
+    return "find", None
+
+
 async def intake(s: State) -> State:
     profile = dict(s.get("profile") or {})
-    if s.get("preset") is not None:  # user tapped an answer button: no need to ask the AI
+    lang = detect_lang(s["message"], s.get("lang", "en"))
+    if s.get("focus"):  # tapped "How to apply" on a card, or picked a scheme: no need to ask the AI
+        return {"profile": profile, "lang": lang, "intent": "scheme_question", "mode": "focus",
+                "steps": s.get("steps", 0) + 1}
+    if s.get("preset") is not None:  # tapped an answer button
         profile.update(_clean(s["preset"]))
-        return {"profile": profile, "lang": s.get("lang", "en"), "intent": "find_schemes", "steps": s.get("steps", 0) + 1}
+        return {"profile": profile, "lang": s.get("lang", "en"), "intent": "find_schemes", "mode": "find",
+                "steps": s.get("steps", 0) + 1}
     if llm.MOCK:
         out = _mock_intake(s["message"])
     else:
@@ -103,11 +139,19 @@ async def intake(s: State) -> State:
         occ = _mock_intake(s["message"])["profile"].get("occupation") or ("student" if "course" in profile else None)
         if occ:
             profile["occupation"] = occ
-    lang = detect_lang(s["message"], s.get("lang", "en"))
-    return {"profile": profile, "lang": lang, "intent": out.get("intent", "find_schemes"), "steps": s.get("steps", 0) + 1}
+    intent = out.get("intent", "find_schemes")
+    if intent != "scheme_question" and any(w in s["message"].lower() for w in APPLY_WORDS + DOC_WORDS):
+        intent = "scheme_question"  # small model sometimes misses "how do I apply?"
+    mode, focus = _mode(intent, s["message"], None, s.get("last_ids") or [])
+    return {"profile": profile, "lang": lang, "intent": intent, "mode": mode, "focus": focus,
+            "steps": s.get("steps", 0) + 1}
 
 
 def route_after_intake(s: State) -> str:
+    if s["mode"] == "focus":
+        return "scheme_tools"
+    if s["mode"] == "which":
+        return "which"
     if s["intent"] == "out_of_scope":
         return "refuse"
     # The only question that blocks results: we need to know which group of schemes to look at.
@@ -147,14 +191,23 @@ def ask(s: State) -> State:
     return {"followup": q, "blocking": True, "asked": s.get("asked", []) + ["occupation"], "answer": q["question"]}
 
 
+def which(s: State) -> State:
+    """'How do I apply?' with several schemes on screen: ask which one (buttons, no AI)."""
+    q = followups.which_scheme(s.get("last_ids") or [], s.get("lang", "en"))
+    return {"followup": q, "blocking": True, "results": [], "evidence": [], "answer": q["question"]}
+
+
 def suggest(s: State) -> State:
-    """After the answer: offer the ONE detail that would settle the most 'Need more info' schemes.
+    """After a 'find' answer: offer the ONE detail that would settle the most 'Need more info' schemes.
     Looks at ALL matching schemes, not only the 5 on screen: e.g. a farmer's age decides KCC and PM-KMY
-    even when 5 other schemes already fill the screen."""
-    field, helps = followups.pick(s.get("all_results") or [], s.get("asked", []), s["profile"].get("occupation", ""))
+    even when 5 other schemes already fill the screen. Focus answers get no question (it would distract)."""
+    if s.get("mode") != "find":
+        return {"followup": None, "blocking": False}
+    occ = s["profile"].get("occupation", "")
+    field, ids = followups.pick(s.get("all_results") or [], s.get("asked", []), occ)
     if not field:
         return {"followup": None, "blocking": False}
-    return {"followup": followups.build(field, s.get("lang", "en"), helps, s["profile"].get("occupation", "")), "blocking": False,
+    return {"followup": followups.build(field, s.get("lang", "en"), ids, occ), "blocking": False,
             "asked": s.get("asked", []) + [field]}
 
 
@@ -167,37 +220,77 @@ def planner(s: State) -> State:
     return {"steps": s.get("steps", 0) + 1}
 
 
+def _card(r: dict) -> dict:
+    """Add display details to an eligibility result."""
+    sch = eligibility.BY_ID[r["scheme_id"]]
+    return {**r, "name": sch["scheme_name"], "short_name": sch.get("short_name", sch["scheme_name"]),
+            "benefit": sch["benefit"], "documents": eligibility.documents_for(r["scheme_id"]),
+            "link": eligibility.apply_link(r["scheme_id"])}
+
+
 def executor(s: State) -> State:
     all_results = eligibility.find_schemes(s["profile"], limit=100)
-    results = [dict(r) for r in all_results[:5]]
-    for r in results:
-        sch = eligibility.BY_ID[r["scheme_id"]]
-        r.update(name=sch["scheme_name"], benefit=sch["benefit"],
-                 documents=eligibility.documents_for(r["scheme_id"]),
-                 link=eligibility.apply_link(r["scheme_id"]))
+    results = [_card(r) for r in all_results[:5]]
     ids = [r["scheme_id"] for r in results]
     evidence = retrieval.search(s["message"] + " " + " ".join(r["name"] for r in results), ids, k=4)
-    return {"results": results, "all_results": all_results, "evidence": evidence, "steps": s.get("steps", 0) + 1}
+    return {"results": results, "all_results": all_results, "total": len(all_results),
+            "evidence": evidence, "steps": s.get("steps", 0) + 1}
 
 
-ANSWER_PROMPT = """You are JanSahayak, a friendly assistant explaining Indian government schemes in simple English.
-Use ONLY the schemes and evidence given. Never add other schemes. Say "you may be eligible", never "you are eligible".
-For each scheme: one line on the benefit, which conditions are met / need checking, and the next step.
-Cite evidence as [S1], [S2]. Keep it under 180 words. Do not ask the user questions; the app shows one follow-up question separately. Remind the user to confirm on the official site or at a CSC.
+def scheme_tools(s: State) -> State:
+    """Tools for ONE scheme: its eligibility, documents, link, and search inside its own PDFs only."""
+    sid = s["focus"]
+    r = _card(eligibility.evaluate(eligibility.BY_ID[sid], s["profile"]))
+    t = s["message"].lower()
+    qtype = "documents" if any(w in t for w in DOC_WORDS) else "apply" if any(w in t for w in APPLY_WORDS) else "general"
+    steer = {"apply": "how to apply application procedure registration online portal",
+             "documents": "documents required certificate proof", "general": ""}[qtype]
+    evidence = retrieval.search(f"{s['message']} {r['name']} {steer}", [sid], k=4)
+    return {"results": [r], "all_results": [], "total": 1, "qtype": qtype, "evidence": evidence,
+            "steps": s.get("steps", 0) + 1}
+
+
+RULES = """Use ONLY the schemes and evidence given. Never add other schemes. Say "you may be eligible", never "you are eligible".
+Cite evidence as [S1], [S2] right after the fact it supports. Do not ask the user questions.
+Write web links as plain text (https://...), never as [text](link). Use **bold** only for scheme names.
 Write the reply in the language given as "Reply language". For Hindi use simple Hindi (Devanagari) and keep scheme names in English; write "आप पात्र हो सकते हैं", never "आप पात्र हैं"."""
+
+FIND_PROMPT = f"""You are JanSahayak, a friendly assistant for Indian government schemes. Write in simple words.
+The scheme cards shown below your reply already list every scheme's benefit, conditions and documents, so do NOT go through the schemes one by one.
+Write 2 to 4 short sentences: how many schemes may suit the user, then name AT MOST 2 of them (the most useful) with their main benefit
+and why they fit. If any say "more_info_needed", add that some need one more detail. End with: confirm on the official site or at a CSC.
+Under 80 words. Never name more than 2 schemes.
+{RULES}"""
+
+FOCUS_PROMPT = f"""You are JanSahayak, a friendly assistant for Indian government schemes. Write in simple words.
+The user is asking about ONE scheme. "Question type" tells you what to write; write ONLY that, nothing else:
+- apply: 3 to 5 numbered steps (where to go or which portal, what to fill, what happens next), then one line "Keep ready: <documents>".
+- documents: a short bulleted list of documents (from the scheme's document list and the evidence), then one line on where to submit them.
+- general: 2 to 4 short sentences answering the question (benefit, who can get it, which of the user's conditions are met or need checking).
+End with the official link given. Under 130 words.
+{RULES}"""
 
 
 async def answer(s: State) -> State:
     if not s["results"]:
         return {"answer": FIXED["no_match"][s.get("lang", "en")], "steps": s["steps"] + 1}
-    schemes = "\n".join(f"- {r['name']} | status: {r['status']} | benefit: {r['benefit']} | conditions: "
-                        + "; ".join(f"{c['text']}={c['result']}" for c in r["conditions"]) for r in s["results"])
+    focus_mode = s.get("mode") == "focus"
+    lines = []
+    for r in s["results"]:
+        line = (f"- {r['name']} | status: {r['status']} | benefit: {r['benefit']} | conditions: "
+                + "; ".join(f"{c['text']}={c['result']}" for c in r["conditions"]))
+        if focus_mode:
+            line += f" | documents: {', '.join(r['documents'])} | official link: {r['link']}"
+        lines.append(line)
     ev = "\n".join(f"[S{i+1}] {c['text'][:500]}" for i, c in enumerate(s["evidence"]))
     notes = f"\nFix these problems from the reviewer: {s['critic_notes']}" if s.get("critic_notes") else ""
+    total = (f"\nQuestion type: {s.get('qtype', 'general')}" if focus_mode
+             else f"\nTotal matching schemes: {s.get('total', len(s['results']))} (top {len(s['results'])} shown as cards)")
     text = await llm.chat([
-        {"role": "system", "content": ANSWER_PROMPT},
-        {"role": "user", "content": f"Profile: {s['profile']}\nSchemes:\n{schemes}\nEvidence:\n{ev}\nQuestion: {s['message']}\nReply language: {'Hindi' if s.get('lang') == 'hi' else 'English'}{notes}"},
-    ], max_tokens=450)
+        {"role": "system", "content": FOCUS_PROMPT if focus_mode else FIND_PROMPT},
+        {"role": "user", "content": f"Profile: {s['profile']}\nSchemes:\n" + "\n".join(lines) + total
+         + f"\nEvidence:\n{ev}\nQuestion: {s['message']}\nReply language: {'Hindi' if s.get('lang') == 'hi' else 'English'}{notes}"},
+    ], max_tokens=400)
     return {"answer": text, "steps": s["steps"] + 1}
 
 
@@ -224,15 +317,18 @@ def route_after_critic(s: State) -> str:
 
 def build_graph():
     g = StateGraph(State)
-    for name, fn in [("intake", intake), ("ask", ask), ("refuse", refuse), ("planner", planner),
-                     ("executor", executor), ("answer", answer), ("critic", critic), ("suggest", suggest)]:
+    for name, fn in [("intake", intake), ("ask", ask), ("which", which), ("refuse", refuse), ("planner", planner),
+                     ("executor", executor), ("scheme_tools", scheme_tools), ("answer", answer), ("critic", critic),
+                     ("suggest", suggest)]:
         g.add_node(name, fn)
     g.set_entry_point("intake")
-    g.add_conditional_edges("intake", route_after_intake, {"ask": "ask", "planner": "planner", "refuse": "refuse"})
-    g.add_edge("ask", END)
-    g.add_edge("refuse", END)
+    g.add_conditional_edges("intake", route_after_intake,
+                            {"ask": "ask", "which": "which", "scheme_tools": "scheme_tools", "planner": "planner", "refuse": "refuse"})
+    for end in ("ask", "which", "refuse"):
+        g.add_edge(end, END)
     g.add_edge("planner", "executor")
     g.add_edge("executor", "answer")
+    g.add_edge("scheme_tools", "answer")
     g.add_edge("answer", "critic")
     g.add_conditional_edges("critic", route_after_critic, {"answer": "answer", "suggest": "suggest"})
     g.add_edge("suggest", END)

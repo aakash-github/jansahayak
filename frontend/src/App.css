@@ -110,7 +110,7 @@ summary { cursor: pointer; font-weight: 500; }
 .panel h4 { margin: 0 0 10px; font-size: 15px; }
 .panel dl { margin: 0; display: flex; flex-direction: column; gap: 6px; }
 .panel dl div { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
-.panel dt { color: var(--muted); text-transform: capitalize; } .panel dd { margin: 0; font-weight: 600; text-transform: capitalize; text-align: right; }
+.panel dt { color: var(--muted); text-transform: capitalize; } .panel dd { margin: 0; font-weight: 600; text-align: right; }
 .muted { color: var(--muted); margin: 0; } .small { font-size: 12px; margin-top: 10px; }
 .steps { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
 .note { background: var(--warn-bg); border-color: transparent; color: var(--fg); }
@@ -153,3 +153,12 @@ summary { cursor: pointer; font-weight: 500; }
   .gtext { flex: 1; min-width: 0; }
   .garrow { position: static; }
 }
+
+/* per-card actions: ask about this scheme */
+.card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: auto; padding-top: 4px; }
+.card-actions .act { background: var(--surface); border: 1px solid var(--line); color: var(--fg); border-radius: 99px; padding: 5px 12px; font-size: 13px; }
+.card-actions .act:hover { border-color: var(--saffron); color: var(--saffron); }
+.card-actions .apply { margin-left: auto; }
+.followup .helps { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.bubble a { color: var(--blue); word-break: break-all; }
+.msg.user .bubble a { color: #fff; }
