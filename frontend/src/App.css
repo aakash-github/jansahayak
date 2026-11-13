@@ -162,3 +162,37 @@ summary { cursor: pointer; font-weight: 500; }
 .followup .helps { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
 .bubble a { color: var(--blue); word-break: break-all; }
 .msg.user .bubble a { color: #fff; }
+
+/* ---------- home screen: centred, airy, little text ---------- */
+.layout.home { grid-template-columns: 1fr; max-width: 900px; }
+.layout.home .chat { min-height: calc(100vh - 100px); }
+.welcome { display: flex; flex-direction: column; }
+.layout.home .hero { padding: 40px 44px; }
+.layout.home .hero h1 { font-size: clamp(28px, 4vw, 42px); max-width: 600px; text-wrap: balance; }
+.layout.home .hero p { font-size: 17px; max-width: 460px; }
+.welcome h2 { font-size: 15px; letter-spacing: .02em; margin: 32px 0 12px; }
+.layout.home .group { align-items: center; text-align: center; padding: 22px 16px; gap: 6px; }
+.layout.home .gicon { width: 60px; height: 60px; font-size: 30px; border-radius: 18px; margin: 0 0 6px; }
+.layout.home .gtext { align-items: center; }
+.layout.home .group b { font-size: 18px; }
+.layout.home .garrow { display: none; }
+.group.green { background: linear-gradient(180deg, #f2fbf4 0%, var(--surface) 60%); }
+.group.blue { background: linear-gradient(180deg, #eef6ff 0%, var(--surface) 60%); }
+.group.saffron { background: linear-gradient(180deg, #fff6ec 0%, var(--surface) 60%); }
+.try { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 24px; }
+.try > span { color: var(--muted); font-size: 14px; margin-right: 4px; }
+.try .chip { font-size: 13px; padding: 6px 12px; }
+.layout.home .trust { justify-content: center; gap: 8px 24px; margin-top: auto; padding-top: 28px; font-size: 13px; }
+@media (prefers-color-scheme: dark) {
+  .group.green, .group.blue, .group.saffron { background: var(--surface); }
+}
+@media (max-width: 640px) {
+  .layout.home .hero { padding: 26px 22px; }
+  .layout.home .hero p { font-size: 15px; }
+  .layout.home .group { flex-direction: row; text-align: left; padding: 14px 16px; gap: 14px; }
+  .layout.home .gicon { width: 48px; height: 48px; font-size: 24px; margin: 0; }
+  .layout.home .gtext { align-items: flex-start; }
+  .layout.home .garrow { display: block; }
+  .layout.home .trust { display: flex; justify-content: flex-start; gap: 6px 16px; font-size: 12px; padding-top: 20px; }
+  .welcome h2 { margin: 24px 0 10px; }
+}

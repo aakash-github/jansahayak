@@ -3,16 +3,15 @@ import { sendMessage, resetSession } from './api'
 import { useListener, speak, stopSpeaking, canListen, canSpeak } from './speech'
 
 const GROUPS = [
-  { key: 'farmer', icon: '🌾', title: 'Farmer', desc: 'Income support, crop insurance, farm credit', text: 'I am a farmer', tone: 'green' },
-  { key: 'student', icon: '🎓', title: 'Student', desc: 'Scholarships & education support', text: 'I am a student looking for scholarships', tone: 'blue' },
-  { key: 'entrepreneur', icon: '🏪', title: 'Business', desc: 'Loans, subsidies, MSME support', text: 'I want to start a small business', tone: 'saffron' },
+  { key: 'farmer', icon: '🌾', title: 'Farmer', desc: 'Income, insurance, loans', text: 'I am a farmer', tone: 'green' },
+  { key: 'student', icon: '🎓', title: 'Student', desc: 'Scholarships & fees', text: 'I am a student looking for scholarships', tone: 'blue' },
+  { key: 'entrepreneur', icon: '🏪', title: 'Business', desc: 'Loans & subsidies', text: 'I want to start a small business', tone: 'saffron' },
 ]
 // Complete one-liners: telling everything at once usually means no follow-up questions at all
 const EXAMPLES = [
-  'Farmer in Uttar Pradesh, 2 acres, age 35',
-  'B.Tech student, girl, OBC, family income 3 lakh',
-  'Starting a food processing business in Maharashtra, age 28',
-  'मैं बिहार का किसान हूँ, 1 एकड़ ज़मीन, उम्र 40',
+  'Farmer in UP, 2 acres, age 35',
+  'B.Tech girl, OBC, income 3 lakh',
+  'मैं बिहार का किसान हूँ, 1 एकड़',
 ]
 // Questions about the schemes on screen. With several cards we first ask "Which scheme?" (on the phone, no server call).
 const FOLLOWUPS = { en: ['How do I apply?', 'What documents do I need?', 'Explain the benefits simply'],
@@ -206,19 +205,19 @@ export default function App() {
         {msgs.length > 0 && <button className="ghost" onClick={reset}>↺ New chat</button>}
       </header>
 
-      <div className="layout">
+      <div className={`layout ${msgs.length === 0 ? 'home' : ''}`}>
         <main className="chat">
           {msgs.length === 0 ? (
             <section className="welcome">
               <div className="hero">
                 <div>
-                  <span className="tag">🏛️ 28 government schemes, made simple</span>
-                  <h1>Find the schemes meant for you, in plain words.</h1>
-                  <p>Tell us about yourself. JanSahayak checks the official eligibility rules, lists the documents you need and links you to the official site.</p>
+                  <span className="tag">🏛️ 28 schemes · Hindi &amp; English</span>
+                  <h1>Find government schemes meant for you</h1>
+                  <p>Tap who you are. We check the official rules and show what you can apply for.</p>
                 </div>
                 <Hero />
               </div>
-              <h2>Who are you looking for support as?</h2>
+              <h2>I am a…</h2>
               <div className="groups">
                 {GROUPS.map((g) => (
                   <button key={g.key} className={`group ${g.tone}`} onClick={() => send(g.text, { occupation: g.key })}>
@@ -228,14 +227,14 @@ export default function App() {
                   </button>
                 ))}
               </div>
-              <h2>Or say it all in one line</h2>
-              <p className="tip">💡 Tell us everything at once (who you are, state, age, income) and you'll get your answer straight away, with fewer questions. Tap an example to try:</p>
-              <div className="chips">{EXAMPLES.map((e) => <button key={e} className="chip" onClick={() => send(e)}>“{e}”</button>)}</div>
+              <div className="try">
+                <span>Or just say it:</span>
+                {EXAMPLES.map((e) => <button key={e} className="chip" onClick={() => send(e)}>{e}</button>)}
+              </div>
               <div className="trust">
-                {canListen && <span>🎤 Speak in English or Hindi</span>}
-                <span>🛡️ No Aadhaar, bank or phone numbers asked</span>
-                <span>📚 Answers cite official sources</span>
-                <span>⚖️ Rules decide eligibility, not AI guesses</span>
+                <span>🛡️ No Aadhaar or bank details</span>
+                <span>📚 Official sources</span>
+                {canListen && <span>🎤 Speak Hindi or English</span>}
               </div>
             </section>
           ) : (
@@ -314,7 +313,7 @@ export default function App() {
           </form>
         </main>
 
-        <aside className="side">
+        {msgs.length > 0 && <aside className="side">
           <div className="panel">
             <h4>👤 Your details</h4>
             {Object.keys(profile).length === 0
@@ -327,7 +326,7 @@ export default function App() {
             <ol className="steps"><li>Pick who you are, or type / 🎤 speak</li><li>See matching schemes straight away</li><li>Tap an answer to sharpen the results</li><li>Open documents &amp; official links</li></ol>
           </div>
           <div className="panel note">Results are guidance, not an official decision. Need help applying? Visit your nearest <b>CSC</b>.</div>
-        </aside>
+        </aside>}
       </div>
     </div>
   )
