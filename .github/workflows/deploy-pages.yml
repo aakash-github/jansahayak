@@ -9,11 +9,11 @@ jobs:
     environment: { name: github-pages }
     defaults: { run: { working-directory: frontend } }
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 20 }
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
       - run: npm install && npm run build
         env: { VITE_API_URL: '${{ vars.VITE_API_URL }}' }
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with: { path: frontend/dist }
       - uses: actions/deploy-pages@v4
