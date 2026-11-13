@@ -1,4 +1,4 @@
-"""Hybrid retrieval: BM25 + dense (fastembed, local ONNX) fused with RRF, then optional reranker.
+"""Hybrid retrieval: BM25 + dense (embeddings, see embed.py) fused with RRF, then optional reranker.
 
 Index is built offline by scripts/ingest.py into data/chunks.json (+ data/embeddings.npy).
 If dense/reranker models are not installed, it falls back to BM25 only.
@@ -12,17 +12,15 @@ DATA = Path(__file__).parent.parent / "data"
 CHUNKS = json.loads((DATA / "chunks.json").read_text(encoding="utf-8")) if (DATA / "chunks.json").exists() else []
 _bm25 = BM25Okapi([c["text"].lower().split() for c in CHUNKS]) if CHUNKS else None
 
-EMBED_MODEL = "BAAI/bge-small-en-v1.5"
 RERANK_MODEL = "Xenova/ms-marco-MiniLM-L-6-v2"
-_embedder = _vectors = _reranker = None
+_vectors = _reranker = None
 try:
     import numpy as np
-    from fastembed import TextEmbedding
-    from fastembed.rerank.cross_encoder import TextCrossEncoder
 
+    from . import embed
     if (DATA / "embeddings.npy").exists():
         _vectors = np.load(DATA / "embeddings.npy")
-        _embedder = TextEmbedding(EMBED_MODEL)
+    from fastembed.rerank.cross_encoder import TextCrossEncoder
     _reranker = TextCrossEncoder(RERANK_MODEL)
 except Exception as e:  # keep the app alive on small hosts
     print("dense/rerank disabled:", e)
@@ -43,10 +41,12 @@ def search(query: str, scheme_ids: list[str] | None = None, k: int = 4) -> list[
     allowed = [i for i, c in enumerate(CHUNKS) if not scheme_ids or c["scheme_id"] in scheme_ids]
     bm = _bm25.get_scores(query.lower().split())
     rankings = [sorted(allowed, key=lambda i: -bm[i])[:20]]
-    if _embedder is not None:
-        q = next(_embedder.query_embed(query))
-        sims = _vectors @ q
-        rankings.append(sorted(allowed, key=lambda i: -sims[i])[:20])
+    if _vectors is not None:
+        try:
+            sims = _vectors @ embed.embed([query])[0]
+            rankings.append(sorted(allowed, key=lambda i: -sims[i])[:20])
+        except Exception as e:  # dense search is a bonus; BM25 still works
+            print("dense search skipped:", e)
     cand = _rrf(rankings)[:12]
     if _reranker is not None and cand:
         scores = list(_reranker.rerank(query, [CHUNKS[i]["text"] for i in cand]))

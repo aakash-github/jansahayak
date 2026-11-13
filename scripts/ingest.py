@@ -14,7 +14,7 @@ from pathlib import Path
 
 DATA = Path(__file__).resolve().parent.parent / "backend" / "data"
 SECTIONS = ["eligibility", "benefit", "document", "how to apply", "application", "exclusion", "faq"]
-CHUNK_WORDS, OVERLAP = 350, 50  # tune via retrieval Recall@K experiments
+CHUNK_WORDS, OVERLAP = 300, 50  # ~400 tokens, under the embedding model's 512-token limit
 
 
 def section_of(text: str) -> str:
@@ -59,13 +59,16 @@ def main():
     (DATA / "chunks.json").write_text(json.dumps(chunks, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"{len(chunks)} chunks written")
     try:
+        import sys
+
         import numpy as np
-        from fastembed import TextEmbedding
-        vecs = np.array(list(TextEmbedding("BAAI/bge-small-en-v1.5").embed([c["text"] for c in chunks])))
+        sys.path.insert(0, str(DATA.parent))
+        from app import embed  # course embedding API, local model as fallback
+        vecs = embed.embed([c["text"] for c in chunks], timeout=60)
         np.save(DATA / "embeddings.npy", vecs)
-        print("embeddings:", vecs.shape)
-    except ImportError:
-        print("fastembed not installed; BM25 only")
+        print("embeddings:", vecs.shape, "via", embed.last_source)
+    except ImportError as e:
+        print("embedding skipped (BM25 only):", e)
 
 
 if __name__ == "__main__":

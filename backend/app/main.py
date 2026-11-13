@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from . import llm
+from . import embed, llm
 from .agents import DATA_AS_OF, GRAPH
 
 app = FastAPI(title="JanSahayak API")
@@ -27,7 +27,8 @@ class ChatIn(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"ok": True, "mock_llm": llm.MOCK}
+    return {"ok": True, "mock_llm": llm.MOCK, "embed_api": bool(embed.BASE_URL and embed.API_KEY),
+            "last_embed_source": embed.last_source}
 
 
 @app.post("/api/chat")

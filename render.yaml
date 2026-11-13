@@ -11,3 +11,8 @@ services:
       - { key: MODEL_NAME, value: Qwen/Qwen3-8B }
       - { key: MODEL_CA_CERT_PATH, value: /etc/secrets/ca.crt }   # upload cert as Render "Secret File" named ca.crt
       - { key: FRONTEND_ORIGIN, sync: false }
+      # Course embedding API (VM02). Falls back to the local model if missing or down.
+      - { key: EMBED_BASE_URL, value: "https://103.42.50.41:1035/v1" }
+      - { key: EMBED_MODEL, value: bge-small-en-v1.5 }
+      - { key: EMBED_API_KEY, sync: false }
+      - { key: EMBED_CA_CERT_PATH, value: /etc/secrets/embed-ca.crt }  # upload vm02-ca.crt as Secret File named embed-ca.crt
