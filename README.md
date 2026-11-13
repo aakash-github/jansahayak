@@ -1,6 +1,7 @@
 # JanSahayak
 
 📖 **New here? Read [How JanSahayak works](docs/HOW_IT_WORKS.md)**, a plain-English guide to the backend.
+Open work and ideas: **[docs/PENDING_WORK.md](docs/PENDING_WORK.md)**.
 
 A chatbot that helps Indian citizens (farmers, students, entrepreneurs) find government schemes, check stated eligibility, and see the documents and official links they need. IIT KGP Capstone, Track B.
 
