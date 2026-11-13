@@ -40,9 +40,12 @@ button { font: inherit; cursor: pointer; }
 @media (max-width: 640px) { .hero { grid-template-columns: 1fr; padding: 24px; } .hero-art { display: none; } }
 .welcome h2 { font-size: 16px; margin: 28px 0 12px; color: var(--muted); font-weight: 600; }
 .groups { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-@media (max-width: 640px) { .groups { grid-template-columns: 1fr; } }
+
 .group { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 18px; box-shadow: var(--shadow);
-  display: flex; flex-direction: column; gap: 4px; color: var(--fg); transition: transform .15s, border-color .15s; }
+  display: flex; flex-direction: column; gap: 4px; color: var(--fg); transition: transform .15s, border-color .15s; position: relative; }
+.gtext { display: flex; flex-direction: column; gap: 4px; }
+.garrow { position: absolute; top: 18px; right: 18px; color: var(--muted); font-size: 18px; transition: transform .15s; }
+.group:hover .garrow { transform: translateX(3px); color: var(--fg); }
 .group:hover { transform: translateY(-3px); }
 .group b { font-size: 17px; } .group small { color: var(--muted); }
 .gicon { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; font-size: 24px; margin-bottom: 8px; }
@@ -50,9 +53,11 @@ button { font: inherit; cursor: pointer; }
 .group.blue .gicon { background: #e7f5ff; } .group.blue:hover { border-color: var(--blue); }
 .group.saffron .gicon { background: #fff4e6; } .group.saffron:hover { border-color: var(--saffron); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip { background: var(--surface); border: 1px solid var(--line); border-radius: 99px; padding: 8px 14px; color: var(--fg); font-size: 14px; }
+.chip { background: var(--surface); border: 1px solid var(--line); border-radius: 99px; padding: 8px 14px; color: var(--fg); font-size: 14px; text-align: left; }
+.tip { margin: -4px 0 12px; color: var(--muted); font-size: 14px; }
 .chip:hover { border-color: var(--saffron); color: var(--saffron); }
 .trust { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 28px; color: var(--muted); font-size: 13px; }
+@media (max-width: 640px) { .trust { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; font-size: 12px; margin-top: 20px; } }
 
 /* thread */
 .thread { flex: 1; display: flex; flex-direction: column; gap: 16px; padding-bottom: 12px; }
@@ -139,3 +144,12 @@ summary { cursor: pointer; font-weight: 500; }
 .fu-foot small { color: var(--muted); }
 .fu-foot .skip { margin-left: auto; background: transparent; border: none; color: var(--muted); text-decoration: underline; font-size: 13px; cursor: pointer; }
 @media (max-width: 640px) { .followup { max-width: 100%; } .followup select { max-width: 100%; } }
+
+/* phones: group cards as compact rows (icon left, text right). Kept at the end so it wins over the base styles. */
+@media (max-width: 640px) {
+  .groups { grid-template-columns: 1fr; gap: 10px; }
+  .group { flex-direction: row; align-items: center; gap: 14px; padding: 14px 16px; }
+  .gicon { margin-bottom: 0; flex-shrink: 0; }
+  .gtext { flex: 1; min-width: 0; }
+  .garrow { position: static; }
+}

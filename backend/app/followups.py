@@ -106,7 +106,20 @@ PRIORITY = ["state", "age", "annual_income", "category", "land_acres", "course",
 
 
 # Study questions only make sense for students ("Which course are you studying?" to a farmer is odd).
-STUDENT_ONLY = {"course", "school_student", "class12_top20", "class12_top1", "top_institution", "swanath_category"}
+STUDENT_ONLY = {"school_student", "class12_top20", "class12_top1", "top_institution", "swanath_category"}
+# Same field, different wording for non-students: farmers/business owners are asked about a qualification
+# (only Agri-Clinics uses "course" outside student schemes: it needs an agriculture degree/diploma).
+NON_STUDENT = {
+    "course": {
+        "en": "Do you have a degree or diploma in agriculture (or veterinary/horticulture)?",
+        "hi": "क्या आपके पास कृषि (या पशु चिकित्सा/बागवानी) में डिग्री या डिप्लोमा है?",
+        "options": [_opt("Yes", "हाँ", course="agriculture graduate"), _opt("No", "नहीं", course="no agriculture degree")]},
+}
+
+
+# After this many follow-ups, only ask when one answer settles 2+ schemes (rare scholarships each need
+# their own yes/no detail; asking all of them one by one gets tiring).
+SOFT_LIMIT = 3
 
 
 def pick(results: list[dict], asked: list[str], occupation: str = "") -> tuple[str | None, int]:
@@ -124,12 +137,14 @@ def pick(results: list[dict], asked: list[str], occupation: str = "") -> tuple[s
         return None, 0
     # most schemes settled first; then the one that helps the top card; then easy questions first
     field = min(count, key=lambda f: (-count[f], first[f], PRIORITY.index(f) if f in PRIORITY else 99))
+    if len([a for a in asked if a != "occupation"]) >= SOFT_LIMIT and count[field] < 2:
+        return None, 0
     return field, count[field]
 
 
-def build(field: str, lang: str, helps: int = 0) -> dict:
+def build(field: str, lang: str, helps: int = 0, occupation: str = "") -> dict:
     """The follow-up as sent to the screen: question text + tap options in the chat language."""
-    q = Q[field]
+    q = NON_STUDENT[field] if occupation != "student" and field in NON_STUDENT else Q[field]
     hi = lang == "hi"
     return {
         "field": field,

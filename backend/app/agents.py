@@ -32,7 +32,8 @@ class State(TypedDict, total=False):
     preset: dict     # values from a tapped answer button: stored directly, no AI call
     followup: dict   # the one question to show under the reply (or None)
     blocking: bool   # True only for "farmer/student/business?" (no schemes shown yet)
-    results: list
+    results: list       # top 5 shown on screen
+    all_results: list   # every matching scheme (used to choose the follow-up question)
     evidence: list
     answer: str
     critic_notes: str
@@ -147,11 +148,13 @@ def ask(s: State) -> State:
 
 
 def suggest(s: State) -> State:
-    """After the answer: offer the ONE detail that would settle the most 'Need more info' schemes."""
-    field, helps = followups.pick(s.get("results") or [], s.get("asked", []), s["profile"].get("occupation", ""))
+    """After the answer: offer the ONE detail that would settle the most 'Need more info' schemes.
+    Looks at ALL matching schemes, not only the 5 on screen: e.g. a farmer's age decides KCC and PM-KMY
+    even when 5 other schemes already fill the screen."""
+    field, helps = followups.pick(s.get("all_results") or [], s.get("asked", []), s["profile"].get("occupation", ""))
     if not field:
         return {"followup": None, "blocking": False}
-    return {"followup": followups.build(field, s.get("lang", "en"), helps), "blocking": False,
+    return {"followup": followups.build(field, s.get("lang", "en"), helps, s["profile"].get("occupation", "")), "blocking": False,
             "asked": s.get("asked", []) + [field]}
 
 
@@ -165,7 +168,8 @@ def planner(s: State) -> State:
 
 
 def executor(s: State) -> State:
-    results = eligibility.find_schemes(s["profile"])
+    all_results = eligibility.find_schemes(s["profile"], limit=100)
+    results = [dict(r) for r in all_results[:5]]
     for r in results:
         sch = eligibility.BY_ID[r["scheme_id"]]
         r.update(name=sch["scheme_name"], benefit=sch["benefit"],
@@ -173,7 +177,7 @@ def executor(s: State) -> State:
                  link=eligibility.apply_link(r["scheme_id"]))
     ids = [r["scheme_id"] for r in results]
     evidence = retrieval.search(s["message"] + " " + " ".join(r["name"] for r in results), ids, k=4)
-    return {"results": results, "evidence": evidence, "steps": s.get("steps", 0) + 1}
+    return {"results": results, "all_results": all_results, "evidence": evidence, "steps": s.get("steps", 0) + 1}
 
 
 ANSWER_PROMPT = """You are JanSahayak, a friendly assistant explaining Indian government schemes in simple English.

@@ -7,10 +7,12 @@ const GROUPS = [
   { key: 'student', icon: '🎓', title: 'Student', desc: 'Scholarships & education support', text: 'I am a student looking for scholarships', tone: 'blue' },
   { key: 'entrepreneur', icon: '🏪', title: 'Business', desc: 'Loans, subsidies, MSME support', text: 'I want to start a small business', tone: 'saffron' },
 ]
+// Complete one-liners: telling everything at once usually means no follow-up questions at all
 const EXAMPLES = [
-  'I am a farmer in Uttar Pradesh with 2 acres of land',
-  'B.Tech student, girl, family income 3 lakh',
-  'I want to start a tailoring business, age 28',
+  'Farmer in Uttar Pradesh, 2 acres, age 35',
+  'B.Tech student, girl, OBC, family income 3 lakh',
+  'Starting a food processing business in Maharashtra, age 28',
+  'मैं बिहार का किसान हूँ, 1 एकड़ ज़मीन, उम्र 40',
 ]
 const FOLLOWUPS = ['What documents do I need?', 'How do I apply?', 'Explain the benefits simply']
 const STATUS = {
@@ -179,7 +181,7 @@ export default function App() {
             <section className="welcome">
               <div className="hero">
                 <div>
-                  <span className="tag">🇮🇳 Government schemes, made simple</span>
+                  <span className="tag">🏛️ 28 government schemes, made simple</span>
                   <h1>Find the schemes meant for you, in plain words.</h1>
                   <p>Tell us about yourself. JanSahayak checks the official eligibility rules, lists the documents you need and links you to the official site.</p>
                 </div>
@@ -189,11 +191,14 @@ export default function App() {
               <div className="groups">
                 {GROUPS.map((g) => (
                   <button key={g.key} className={`group ${g.tone}`} onClick={() => send(g.text, { occupation: g.key })}>
-                    <span className="gicon">{g.icon}</span><b>{g.title}</b><small>{g.desc}</small>
+                    <span className="gicon">{g.icon}</span>
+                    <span className="gtext"><b>{g.title}</b><small>{g.desc}</small></span>
+                    <span className="garrow" aria-hidden="true">→</span>
                   </button>
                 ))}
               </div>
-              <h2>Or try an example</h2>
+              <h2>Or say it all in one line</h2>
+              <p className="tip">💡 Tell us everything at once (who you are, state, age, income) and you'll get your answer straight away, with fewer questions. Tap an example to try:</p>
               <div className="chips">{EXAMPLES.map((e) => <button key={e} className="chip" onClick={() => send(e)}>“{e}”</button>)}</div>
               <div className="trust">
                 {canListen && <span>🎤 Speak in English or Hindi</span>}
@@ -283,7 +288,7 @@ export default function App() {
           </div>
           <div className="panel">
             <h4>🧭 How it works</h4>
-            <ol className="steps"><li>Type, or tap 🎤 and speak</li><li>Tell us about yourself</li><li>We check official rules</li><li>See schemes, documents &amp; links</li></ol>
+            <ol className="steps"><li>Pick who you are, or type / 🎤 speak</li><li>See matching schemes straight away</li><li>Tap an answer to sharpen the results</li><li>Open documents &amp; official links</li></ol>
           </div>
           <div className="panel note">Results are guidance, not an official decision. Need help applying? Visit your nearest <b>CSC</b>.</div>
         </aside>

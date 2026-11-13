@@ -85,15 +85,17 @@ flowchart TD
 
 1. As soon as we know the user group, we show schemes, even with missing details. Missing details show as "?" on the cards.
 2. Under the reply we show **at most one** question, chosen like this:
-   - count, for each unknown detail, how many of the shown "Need more info" schemes it would settle
+   - count, for each unknown detail, how many "Need more info" schemes it would settle. This counts **all** matching schemes, not just the 5 cards on screen: a farmer's age decides KCC and PM-KMY even when 5 other schemes fill the screen
    - pick the biggest count; if tied, the one that helps the top card; then easier questions first
-   - never ask the same thing twice in a chat
+   - never ask the same thing twice in a chat; study questions only go to students (farmers get "agriculture degree?" instead)
+   - after 3 follow-ups, only ask if one answer settles 2 or more schemes (so nobody gets 10 questions)
 3. Each question has **tap buttons**. Tapping sends the value straight to the backend (no AI call, so it's faster and can't be misread). Number answers use ranges whose edges match the scheme limits, e.g. income `Up to ₹2.5 lakh / ₹2.5–3.5 / ₹3.5–4.5 / ₹4.5–8 / more than ₹8 lakh`. Long lists (states) use a dropdown. Users can still type, or tap **Skip**.
 4. Telling everything in one message (e.g. *"Farmer in Bihar, 2 acres, age 30"*) usually means no question at all.
 
 Example: a student taps 🎓 Student → 5 scholarships shown, question "family income?" (it settles all 5) → taps "Up to ₹2.5 lakh" → question "category?" → taps SC → Top Class SC moves to the top.
 
-Code: `backend/app/agents.py` (flow), `backend/app/followups.py` (questions, buttons, picking logic)
+Code: `backend/app/agents.py` (flow), `backend/app/followups.py` (questions, buttons, picking logic).
+Checks: `python backend/tests/test_followups.py` simulates thousands of conversations. It confirms every conversation ends, nothing is asked twice, no askable question is skipped, every rule detail has a question, and every scheme can reach "May be eligible". Run it after editing `schemes.json`.
 
 ---
 
