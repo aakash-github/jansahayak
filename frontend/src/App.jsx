@@ -25,6 +25,8 @@ const LABELS = {
   shg_member: 'Women SHG member', class12_top20: 'Top 20% in Class 12', class12_top1: 'Top 1% in Class 12',
   top_institution: 'Top institute', school_student: 'School student', swanath_category: 'Swanath category', dpiit_recognised: 'DPIIT startup',
 }
+// on phones the 🎤 button sits right next to the text box, so the placeholder skips the emoji
+const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches
 const fmt = (k, v) => k === 'annual_income' ? `₹${Number(v).toLocaleString('en-IN')}`
   : typeof v === 'boolean' ? (v ? 'Yes' : 'No')
   : k === 'category' ? String(v).toUpperCase()
@@ -214,7 +216,9 @@ export default function App() {
               onChange={(e) => setInput(e.target.value)}
               readOnly={mic.listening}
               className={mic.listening ? 'listening' : ''}
-              placeholder={mic.listening ? (lang === 'hi-IN' ? 'बोलिए… सुन रहा हूँ' : 'Listening… speak now') : 'Type or tap 🎤 to speak'}
+              placeholder={mic.listening ? (lang === 'hi-IN' ? 'बोलिए… सुन रहा हूँ' : 'Listening… speak now')
+                : !canListen ? 'Type your question'
+                : isMobile ? 'Type or tap to speak' : 'Type or tap 🎤 to speak'}
             />
             {canListen && (
               <button type="button" className={`mic ${mic.listening ? 'on' : ''}`} disabled={busy}
