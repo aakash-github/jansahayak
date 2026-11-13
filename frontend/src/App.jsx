@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { sendMessage, resetSession } from './api'
+import { useListener, speak, stopSpeaking, canListen, canSpeak } from './speech'
 
 const GROUPS = [
   { key: 'farmer', icon: '🌾', title: 'Farmer', desc: 'Income support, crop insurance, farm credit', text: 'I am a farmer', tone: 'green' },
@@ -42,9 +43,14 @@ function Hero() {
 }
 
 function Bubble({ text }) {
-  // turn [S1] into small citation pills
-  const parts = text.split(/(\[S\d+\])/g)
-  return <div className="bubble">{parts.map((p, i) => /^\[S\d+\]$/.test(p) ? <sup key={i} className="cite">{p.slice(1, -1)}</sup> : p)}</div>
+  // turn [S1] into small citation pills and **text** into bold
+  const parts = text.split(/(\[S\d+\]|\*\*[^*]+\*\*)/g)
+  return (
+    <div className="bubble">
+      {parts.map((p, i) => /^\[S\d+\]$/.test(p) ? <sup key={i} className="cite">{p.slice(1, -1)}</sup>
+        : /^\*\*[^*]+\*\*$/.test(p) ? <b key={i}>{p.slice(2, -2)}</b> : p)}
+    </div>
+  )
 }
 
 function SchemeCard({ s }) {
@@ -75,24 +81,41 @@ export default function App() {
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [slow, setSlow] = useState(false)
+  const [lang, setLang] = useState('en-IN')
+  const [speaking, setSpeaking] = useState(null) // index of message being read aloud
+  const viaVoice = useRef(false)
   const end = useRef(null)
+  const mic = useListener({ lang, onFinal: (t) => { viaVoice.current = true; send(t) } })
 
   useEffect(() => { end.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs, busy])
 
+  function readAloud(i, text) {
+    if (!canSpeak) return
+    if (speaking === i) { stopSpeaking(); setSpeaking(null); return }
+    setSpeaking(i)
+    const hindi = /[ऀ-ॿ]/.test(text) // Devanagari -> Hindi voice
+    speak(text, { lang: hindi ? 'hi-IN' : 'en-IN', onEnd: () => setSpeaking((s) => (s === i ? null : s)) })
+  }
+
   async function send(text) {
     if (!text.trim() || busy) return
-    setMsgs((m) => [...m, { role: 'user', text }])
+    const voice = viaVoice.current
+    viaVoice.current = false
+    stopSpeaking(); setSpeaking(null)
+    const botIndex = msgs.length + 1 // user message goes at msgs.length, reply right after
+    setMsgs((m) => [...m, { role: 'user', text, voice }])
     setInput(''); setBusy(true); setSlow(false)
     const timer = setTimeout(() => setSlow(true), 8000)
     try {
       const r = await sendMessage(sid, text)
       setSid(r.session_id); setProfile(r.profile || {})
       setMsgs((m) => [...m, { role: 'bot', text: r.message, schemes: r.schemes, sources: r.sources, asOf: r.data_as_of, followup: r.needs_followup }])
+      if (voice) readAloud(botIndex, r.message) // asked by voice -> answer by voice
     } catch {
       setMsgs((m) => [...m, { role: 'bot', text: 'I could not reach the server. It may be waking up, so please try again in a minute.' }])
     } finally { clearTimeout(timer); setBusy(false) }
   }
-  async function reset() { await resetSession(sid); setSid(null); setMsgs([]); setProfile({}) }
+  async function reset() { stopSpeaking(); setSpeaking(null); await resetSession(sid); setSid(null); setMsgs([]); setProfile({}) }
   const last = msgs[msgs.length - 1]
 
   return (
@@ -128,6 +151,7 @@ export default function App() {
               <h2>Or try an example</h2>
               <div className="chips">{EXAMPLES.map((e) => <button key={e} className="chip" onClick={() => send(e)}>“{e}”</button>)}</div>
               <div className="trust">
+                {canListen && <span>🎤 Speak in English or Hindi</span>}
                 <span>🛡️ No Aadhaar, bank or phone numbers asked</span>
                 <span>📚 Answers cite official sources</span>
                 <span>⚖️ Rules decide eligibility, not AI guesses</span>
@@ -140,6 +164,12 @@ export default function App() {
                   {m.role === 'bot' && <span className="avatar">ज</span>}
                   <div className="col">
                     <Bubble text={m.text} />
+                    {m.role === 'user' && m.voice && <small className="via">🎤 spoken</small>}
+                    {m.role === 'bot' && canSpeak && (
+                      <button className={`listen ${speaking === i ? 'on' : ''}`} onClick={() => readAloud(i, m.text)}>
+                        {speaking === i ? '⏹ Stop' : '🔊 Listen'}
+                      </button>
+                    )}
                     {m.schemes?.length > 0 && <div className="schemes">{m.schemes.map((s) => <SchemeCard key={s.scheme_id} s={s} />)}</div>}
                     {m.sources?.length > 0 && (
                       <div className="sources">
@@ -163,9 +193,29 @@ export default function App() {
             </section>
           )}
 
+          {mic.error && <div className="mic-error" onClick={mic.clearError}>{mic.error} ✕</div>}
           <form className="composer" onSubmit={(e) => { e.preventDefault(); send(input) }}>
-            <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Describe your situation, e.g. “I am a farmer in Bihar…”" />
-            <button disabled={busy || !input.trim()} aria-label="Send">➤</button>
+            {canListen && (
+              <button type="button" className="lang" onClick={() => setLang(lang === 'en-IN' ? 'hi-IN' : 'en-IN')}
+                title="Language you will speak in" disabled={mic.listening}>
+                {lang === 'en-IN' ? 'EN' : 'हिं'}
+              </button>
+            )}
+            <input
+              value={mic.listening ? mic.interim : input}
+              onChange={(e) => setInput(e.target.value)}
+              readOnly={mic.listening}
+              className={mic.listening ? 'listening' : ''}
+              placeholder={mic.listening ? (lang === 'hi-IN' ? 'बोलिए… सुन रहा हूँ' : 'Listening… speak now') : 'Type or tap 🎤 to speak'}
+            />
+            {canListen && (
+              <button type="button" className={`mic ${mic.listening ? 'on' : ''}`} disabled={busy}
+                onClick={mic.listening ? mic.stop : mic.start} aria-label={mic.listening ? 'Stop listening' : 'Speak'}
+                title={mic.listening ? 'Stop' : 'Tap and speak'}>
+                {mic.listening ? '■' : '🎤'}
+              </button>
+            )}
+            <button disabled={busy || mic.listening || !input.trim()} aria-label="Send">➤</button>
           </form>
         </main>
 
@@ -179,7 +229,7 @@ export default function App() {
           </div>
           <div className="panel">
             <h4>🧭 How it works</h4>
-            <ol className="steps"><li>Tell us about yourself</li><li>We check official rules</li><li>See schemes, documents &amp; links</li></ol>
+            <ol className="steps"><li>Type, or tap 🎤 and speak</li><li>Tell us about yourself</li><li>We check official rules</li><li>See schemes, documents &amp; links</li></ol>
           </div>
           <div className="panel note">Results are guidance, not an official decision. Need help applying? Visit your nearest <b>CSC</b>.</div>
         </aside>

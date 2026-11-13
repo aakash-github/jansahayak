@@ -109,3 +109,17 @@ summary { cursor: pointer; font-weight: 500; }
 .muted { color: var(--muted); margin: 0; } .small { font-size: 12px; margin-top: 10px; }
 .steps { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
 .note { background: var(--warn-bg); border-color: transparent; color: var(--fg); }
+
+/* voice */
+.lang { width: 48px; flex-shrink: 0; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--fg); font-weight: 600; font-size: 14px; }
+.lang:hover { border-color: var(--saffron); color: var(--saffron); }
+.composer .mic { background: var(--surface); border: 1px solid var(--line); color: var(--fg); font-size: 20px; }
+.composer .mic:hover { border-color: var(--saffron); }
+.composer .mic.on { background: var(--bad); border-color: var(--bad); color: #fff; font-size: 16px; animation: pulse 1.3s infinite; }
+.composer input.listening { border-color: var(--bad); font-style: italic; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(224,49,49,.5); } 70% { box-shadow: 0 0 0 12px rgba(224,49,49,0); } 100% { box-shadow: 0 0 0 0 rgba(224,49,49,0); } }
+.listen { align-self: flex-start; background: transparent; border: 1px solid var(--line); color: var(--muted); border-radius: 99px; padding: 3px 12px; font-size: 13px; }
+.listen:hover, .listen.on { border-color: var(--saffron); color: var(--saffron); }
+.via { align-self: flex-end; color: var(--muted); font-size: 12px; }
+.mic-error { background: var(--bad-bg); color: var(--bad); border-radius: 10px; padding: 8px 12px; font-size: 14px; cursor: pointer; margin-top: 8px; }
+@media (max-width: 480px) { .lang { width: 42px; } .composer button { width: 46px; } .composer input { padding: 12px 14px; } }

@@ -238,7 +238,7 @@ Time: about **6 seconds**. The first message after the server has been idle 15+ 
 | No real PDFs added yet (search uses starter chunks) | Add PDFs to `data/raw/`, run `ingest.py` |
 | Planner always uses the same plan | OK for now; could let the AI choose tools later |
 | The AI sees the profile, not the full chat history | Fine for scheme finding; add history if needed |
-| English only | Hindi is a stretch goal |
+| Voice + Hindi replies work, but follow-up questions are still English only | Translate the follow-up questions |
 | Evaluation answers not filled | Fill `eval/eval_set.csv`, run `eval/run_eval.py` |
 
 ---
