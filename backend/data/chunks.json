@@ -1,0 +1,218 @@
+[
+ {
+  "scheme_id": "FARM-01",
+  "title": "PM-KISAN Samman Nidhi",
+  "section": "benefit",
+  "page": null,
+  "text": "PM-KISAN Samman Nidhi benefit: Rs 6,000 per year income support, paid in 3 instalments of Rs 2,000 to the bank account",
+  "source_url": "https://pmkisan.gov.in/Documents/RevisedPM-KISANOperationalGuidelines%28English%29.pdf",
+  "id": 0
+ },
+ {
+  "scheme_id": "FARM-01",
+  "title": "PM-KISAN Samman Nidhi",
+  "section": "eligibility",
+  "page": null,
+  "text": "PM-KISAN Samman Nidhi eligibility: Landholding farmer family; Owns cultivable land in their name (tenant farmers are not covered)",
+  "source_url": "https://pmkisan.gov.in/Documents/RevisedPM-KISANOperationalGuidelines%28English%29.pdf",
+  "id": 1
+ },
+ {
+  "scheme_id": "FARM-01",
+  "title": "PM-KISAN Samman Nidhi",
+  "section": "document",
+  "page": null,
+  "text": "PM-KISAN Samman Nidhi document: Documents: Aadhaar card, Land ownership records, Bank account linked with Aadhaar",
+  "source_url": "https://pmkisan.gov.in/Documents/RevisedPM-KISANOperationalGuidelines%28English%29.pdf",
+  "id": 2
+ },
+ {
+  "scheme_id": "FARM-02",
+  "title": "Pradhan Mantri Fasal Bima Yojana (PMFBY)",
+  "section": "benefit",
+  "page": null,
+  "text": "Pradhan Mantri Fasal Bima Yojana (PMFBY) benefit: Crop insurance at low premium (2% kharif, 1.5% rabi, 5% commercial/horticulture crops)",
+  "source_url": "https://pmfby.gov.in/",
+  "id": 3
+ },
+ {
+  "scheme_id": "FARM-02",
+  "title": "Pradhan Mantri Fasal Bima Yojana (PMFBY)",
+  "section": "eligibility",
+  "page": null,
+  "text": "Pradhan Mantri Fasal Bima Yojana (PMFBY) eligibility: Farmer (owner, tenant or sharecropper) growing notified crops in a notified area",
+  "source_url": "https://pmfby.gov.in/",
+  "id": 4
+ },
+ {
+  "scheme_id": "FARM-02",
+  "title": "Pradhan Mantri Fasal Bima Yojana (PMFBY)",
+  "section": "document",
+  "page": null,
+  "text": "Pradhan Mantri Fasal Bima Yojana (PMFBY) document: Documents: Aadhaar card, Land records or tenancy/sowing certificate, Bank passbook, Sowing declaration",
+  "source_url": "https://pmfby.gov.in/",
+  "id": 5
+ },
+ {
+  "scheme_id": "FARM-03",
+  "title": "Kisan Credit Card (KCC)",
+  "section": "benefit",
+  "page": null,
+  "text": "Kisan Credit Card (KCC) benefit: Short-term crop and allied-activity (dairy, fisheries) credit at concessional interest with interest subvention",
+  "source_url": "https://fasalrin.gov.in/circulars",
+  "id": 6
+ },
+ {
+  "scheme_id": "FARM-03",
+  "title": "Kisan Credit Card (KCC)",
+  "section": "eligibility",
+  "page": null,
+  "text": "Kisan Credit Card (KCC) eligibility: Farmer, tenant farmer, or engaged in animal husbandry/fisheries; Age 18 or above",
+  "source_url": "https://fasalrin.gov.in/circulars",
+  "id": 7
+ },
+ {
+  "scheme_id": "FARM-03",
+  "title": "Kisan Credit Card (KCC)",
+  "section": "document",
+  "page": null,
+  "text": "Kisan Credit Card (KCC) document: Documents: Identity proof, Address proof, Land records or tenancy proof, Passport-size photo",
+  "source_url": "https://fasalrin.gov.in/circulars",
+  "id": 8
+ },
+ {
+  "scheme_id": "STU-01",
+  "title": "PM-USP Central Sector Scheme of Scholarship (CSSS)",
+  "section": "benefit",
+  "page": null,
+  "text": "PM-USP Central Sector Scheme of Scholarship (CSSS) benefit: Rs 12,000 per year (first 3 years of graduation) and Rs 20,000 per year for postgraduation",
+  "source_url": "https://www.education.gov.in/sites/upload_files/mhrd/files/upload_document/PM_USP_CSSS_guidelines_updated.pdf",
+  "id": 9
+ },
+ {
+  "scheme_id": "STU-01",
+  "title": "PM-USP Central Sector Scheme of Scholarship (CSSS)",
+  "section": "eligibility",
+  "page": null,
+  "text": "PM-USP Central Sector Scheme of Scholarship (CSSS) eligibility: Regular college student; Family income up to Rs 4.5 lakh per year; Above 80th percentile in Class 12 of their board",
+  "source_url": "https://www.education.gov.in/sites/upload_files/mhrd/files/upload_document/PM_USP_CSSS_guidelines_updated.pdf",
+  "id": 10
+ },
+ {
+  "scheme_id": "STU-01",
+  "title": "PM-USP Central Sector Scheme of Scholarship (CSSS)",
+  "section": "document",
+  "page": null,
+  "text": "PM-USP Central Sector Scheme of Scholarship (CSSS) document: Documents: Class 12 marksheet, Income certificate, College admission proof, Bank account details",
+  "source_url": "https://www.education.gov.in/sites/upload_files/mhrd/files/upload_document/PM_USP_CSSS_guidelines_updated.pdf",
+  "id": 11
+ },
+ {
+  "scheme_id": "STU-02",
+  "title": "AICTE Pragati Scholarship",
+  "section": "benefit",
+  "page": null,
+  "text": "AICTE Pragati Scholarship benefit: Rs 50,000 per year for girl students in AICTE-approved technical degree/diploma courses",
+  "source_url": "https://www.aicte-india.org/",
+  "id": 12
+ },
+ {
+  "scheme_id": "STU-02",
+  "title": "AICTE Pragati Scholarship",
+  "section": "eligibility",
+  "page": null,
+  "text": "AICTE Pragati Scholarship eligibility: Student in an AICTE-approved technical course; Girl student; Family income up to Rs 8 lakh per year",
+  "source_url": "https://www.aicte-india.org/",
+  "id": 13
+ },
+ {
+  "scheme_id": "STU-02",
+  "title": "AICTE Pragati Scholarship",
+  "section": "document",
+  "page": null,
+  "text": "AICTE Pragati Scholarship document: Documents: Income certificate, Admission letter, Class 10/12 marksheets, Bank account details",
+  "source_url": "https://www.aicte-india.org/",
+  "id": 14
+ },
+ {
+  "scheme_id": "STU-03",
+  "title": "AICTE Saksham Scholarship",
+  "section": "benefit",
+  "page": null,
+  "text": "AICTE Saksham Scholarship benefit: Rs 50,000 per year for specially-abled students in AICTE-approved technical courses",
+  "source_url": "https://www.aicte-india.org/",
+  "id": 15
+ },
+ {
+  "scheme_id": "STU-03",
+  "title": "AICTE Saksham Scholarship",
+  "section": "eligibility",
+  "page": null,
+  "text": "AICTE Saksham Scholarship eligibility: Student in an AICTE-approved technical course; Disability of 40% or more; Family income up to Rs 8 lakh per year",
+  "source_url": "https://www.aicte-india.org/",
+  "id": 16
+ },
+ {
+  "scheme_id": "STU-03",
+  "title": "AICTE Saksham Scholarship",
+  "section": "document",
+  "page": null,
+  "text": "AICTE Saksham Scholarship document: Documents: Disability certificate, Income certificate, Admission letter, Bank account details",
+  "source_url": "https://www.aicte-india.org/",
+  "id": 17
+ },
+ {
+  "scheme_id": "ENT-01",
+  "title": "Prime Minister's Employment Generation Programme (PMEGP)",
+  "section": "benefit",
+  "page": null,
+  "text": "Prime Minister's Employment Generation Programme (PMEGP) benefit: 15-35% subsidy on bank loan for a new micro-enterprise (projects up to Rs 50 lakh manufacturing / Rs 20 lakh service)",
+  "source_url": "https://www.msme.gov.in/sites/default/files/Revisedguidelines07.12.2023.pdf",
+  "id": 18
+ },
+ {
+  "scheme_id": "ENT-01",
+  "title": "Prime Minister's Employment Generation Programme (PMEGP)",
+  "section": "eligibility",
+  "page": null,
+  "text": "Prime Minister's Employment Generation Programme (PMEGP) eligibility: Setting up a new micro-enterprise; Age 18 or above",
+  "source_url": "https://www.msme.gov.in/sites/default/files/Revisedguidelines07.12.2023.pdf",
+  "id": 19
+ },
+ {
+  "scheme_id": "ENT-01",
+  "title": "Prime Minister's Employment Generation Programme (PMEGP)",
+  "section": "document",
+  "page": null,
+  "text": "Prime Minister's Employment Generation Programme (PMEGP) document: Documents: Project report, Identity and address proof, Education certificate (VIII pass for larger projects), Caste/special-category certificate if applicable",
+  "source_url": "https://www.msme.gov.in/sites/default/files/Revisedguidelines07.12.2023.pdf",
+  "id": 20
+ },
+ {
+  "scheme_id": "ENT-02",
+  "title": "Credit Guarantee Scheme (CGTMSE)",
+  "section": "benefit",
+  "page": null,
+  "text": "Credit Guarantee Scheme (CGTMSE) benefit: Collateral-free bank loans for micro and small enterprises, guaranteed by CGTMSE",
+  "source_url": "https://www.cgtmse.in/schemes.aspx",
+  "id": 21
+ },
+ {
+  "scheme_id": "ENT-02",
+  "title": "Credit Guarantee Scheme (CGTMSE)",
+  "section": "eligibility",
+  "page": null,
+  "text": "Credit Guarantee Scheme (CGTMSE) eligibility: New or existing micro/small enterprise",
+  "source_url": "https://www.cgtmse.in/schemes.aspx",
+  "id": 22
+ },
+ {
+  "scheme_id": "ENT-02",
+  "title": "Credit Guarantee Scheme (CGTMSE)",
+  "section": "document",
+  "page": null,
+  "text": "Credit Guarantee Scheme (CGTMSE) document: Documents: Udyam registration, Business plan / loan application, KYC documents",
+  "source_url": "https://www.cgtmse.in/schemes.aspx",
+  "id": 23
+ }
+]

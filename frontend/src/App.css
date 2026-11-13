@@ -1,0 +1,32 @@
+:root { --bg:#f6f7f9; --fg:#1d2330; --card:#fff; --muted:#667085; --accent:#e8590c; --line:#e4e7ec; }
+@media (prefers-color-scheme: dark) { :root { --bg:#14171c; --fg:#e6e8eb; --card:#1d2128; --muted:#98a2b3; --line:#2c323c; } }
+* { box-sizing: border-box; }
+body { margin:0; font-family: system-ui, sans-serif; background:var(--bg); color:var(--fg); font-size:17px; }
+.app { max-width:760px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; padding:0 16px; }
+header { display:flex; align-items:baseline; gap:12px; padding:16px 0; border-bottom:1px solid var(--line); }
+header h1 { margin:0; color:var(--accent); font-size:24px; }
+header span { color:var(--muted); flex:1; font-size:14px; }
+button { background:var(--accent); color:#fff; border:0; border-radius:8px; padding:8px 14px; font-size:15px; cursor:pointer; }
+button:disabled { opacity:.5; }
+.profile { font-size:13px; color:var(--muted); padding:8px 0; }
+.chip { display:inline-block; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:2px 8px; margin:2px; }
+main { flex:1; padding:12px 0; }
+.welcome { text-align:center; padding:40px 0; }
+.quick { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+.msg { margin:10px 0; display:flex; flex-direction:column; }
+.msg.user { align-items:flex-end; }
+.bubble { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 14px; max-width:90%; white-space:pre-wrap; }
+.msg.user .bubble { background:var(--accent); color:#fff; border:0; }
+.typing { color:var(--muted); }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-top:8px; }
+.card-head { display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+.card p { margin:6px 0; color:var(--muted); }
+.conds { padding-left:4px; list-style:none; margin:6px 0; font-size:15px; }
+.badge { font-size:12px; border-radius:10px; padding:2px 8px; }
+.badge.ok { background:#d3f9d8; color:#2b8a3e; } .badge.warn { background:#fff3bf; color:#8f6b00; } .badge.bad { background:#ffe3e3; color:#c92a2a; }
+.card a, .sources a { color:var(--accent); }
+.sources { font-size:13px; margin-top:6px; display:flex; flex-wrap:wrap; gap:8px; }
+.asof { width:100%; color:var(--muted); }
+form { display:flex; gap:8px; padding:12px 0; position:sticky; bottom:0; background:var(--bg); }
+input { flex:1; padding:10px 12px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--fg); font-size:16px; }
+footer { font-size:12px; color:var(--muted); text-align:center; padding-bottom:12px; }

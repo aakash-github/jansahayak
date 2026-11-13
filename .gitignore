@@ -1,0 +1,14 @@
+.env
+*.crt
+__pycache__/
+.venv/
+node_modules/
+dist/
+backend/data/raw/*
+!backend/data/raw/.gitkeep
+# research docs kept locally, not pushed
+/*.docx
+/*.pdf
+/*.odt
+/*.jpg
+/*.xlsx

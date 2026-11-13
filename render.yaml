@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: jansahayak-api
+    runtime: docker
+    rootDir: backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - { key: MODEL_BASE_URL, sync: false }
+      - { key: MODEL_API_KEY, sync: false }
+      - { key: MODEL_NAME, value: Qwen/Qwen3-8B }
+      - { key: MODEL_CA_CERT_PATH, value: /etc/secrets/ca.crt }   # upload cert as Render "Secret File" named ca.crt
+      - { key: FRONTEND_ORIGIN, sync: false }
