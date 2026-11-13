@@ -19,8 +19,16 @@ const STATUS = {
   appears_not_eligible: { label: 'Condition not met', cls: 'bad', icon: '✕' },
 }
 const COND = { met: ['✓', 'ok'], not_met: ['✕', 'bad'], unknown: ['?', 'warn'] }
-const LABELS = { land_acres: 'Land (acres)', annual_income: 'Family income', business_type: 'Business' }
-const fmt = (k, v) => (k === 'annual_income' ? `₹${Number(v).toLocaleString('en-IN')}` : String(v))
+const LABELS = {
+  occupation: 'Occupation', state: 'State', age: 'Age', annual_income: 'Family income', gender: 'Gender',
+  category: 'Category', disability: 'Disability', land_acres: 'Land (acres)', course: 'Course', business_type: 'Business',
+  shg_member: 'Women SHG member', class12_top20: 'Top 20% in Class 12', class12_top1: 'Top 1% in Class 12',
+  top_institution: 'Top institute', school_student: 'School student', swanath_category: 'Swanath category', dpiit_recognised: 'DPIIT startup',
+}
+const fmt = (k, v) => k === 'annual_income' ? `₹${Number(v).toLocaleString('en-IN')}`
+  : typeof v === 'boolean' ? (v ? 'Yes' : 'No')
+  : k === 'category' ? String(v).toUpperCase()
+  : String(v).charAt(0).toUpperCase() + String(v).slice(1)
 
 function Hero() {
   return (

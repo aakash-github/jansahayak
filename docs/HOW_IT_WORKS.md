@@ -64,7 +64,7 @@ flowchart TD
 | # | Step | Uses AI? | What it does in one line |
 |---|---|---|---|
 | 1 | **Intake** | ✅ | Reads the message and fills a profile, e.g. `{occupation: farmer, state: Bihar, land_acres: 1}` |
-| 2 | **Follow-up** | ❌ | If an important detail is missing, asks for it, one question at a time. User can say "skip". |
+| 2 | **Follow-up** | ❌ | If an important detail is missing, asks for it, one question at a time. User can say "skip". Yes/no facts like "women SHG member" or "admitted to IIT" are picked up only if the user mentions them. |
 | 3 | **Planner** | ❌ | Decides the order of tools. Today this is a fixed plan (always the same 4 tools). |
 | 4 | **Executor** | ❌ | Runs the 4 tools (below) |
 | 5 | **Answer** | ✅ | Turns tool results into a short, friendly reply with citations `[S1]` |
@@ -83,9 +83,9 @@ flowchart TD
 
 | User type | We ask for |
 |---|---|
-| Farmer | state, land (acres) |
-| Student | family income, course |
-| Business | age, business type |
+| Farmer | state, land (acres), age |
+| Student | family income, course, category (General/OBC/SC/ST/EWS) |
+| Business | age, business type, state |
 | Unknown | farmer, student or business? |
 
 Code: `backend/app/agents.py`
