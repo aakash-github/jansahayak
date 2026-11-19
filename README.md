@@ -3,6 +3,7 @@
 A chatbot that helps Indian citizens (farmers, students, entrepreneurs) find government schemes, check the stated eligibility rules, and see the documents and official links they need. Works in English and Hindi, typed or spoken. IIT KGP Capstone, Track B.
 
 📖 **Docs**
+- [How it works (simplified)](docs/HOW_IT_WORKS_SIMPLIFIED.md): every piece in one page of diagrams, start here
 - [How JanSahayak works](docs/HOW_IT_WORKS.md): the full backend in plain English (chat flow, eligibility rules, follow-up questions)
 - [Document search (RAG) and embeddings](docs/RAG_AND_EMBEDDINGS.md): how PDFs become searchable, how good search is, how to add a PDF
 - [Evaluation and tracing](docs/EVALUATION.md): the 79-query test set, metrics, failure types, request traces · [latest results](eval/results/latest.md)
