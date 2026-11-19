@@ -1,70 +1,92 @@
 # JanSahayak
 
-📖 **New here? Read [How JanSahayak works](docs/HOW_IT_WORKS.md)**, a plain-English guide to the backend.
+A chatbot that helps Indian citizens (farmers, students, entrepreneurs) find government schemes, check the stated eligibility rules, and see the documents and official links they need. Works in English and Hindi, typed or spoken. IIT KGP Capstone, Track B.
 
-A chatbot that helps Indian citizens (farmers, students, entrepreneurs) find government schemes, check stated eligibility, and see the documents and official links they need. IIT KGP Capstone, Track B.
+📖 **Docs**
+- [How JanSahayak works](docs/HOW_IT_WORKS.md): the full backend in plain English (chat flow, eligibility rules, follow-up questions)
+- [Document search (RAG) and embeddings](docs/RAG_AND_EMBEDDINGS.md): how PDFs become searchable, how good search is, how to add a PDF
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  U[Citizen browser] --> FE["React app<br/>GitHub Pages (static)"]
-  FE -- "POST /api/chat (HTTPS JSON)" --> BE["FastAPI backend<br/>Render (Docker)"]
-  subgraph BE_box [Backend: holds API key + CA cert]
-    BE --> G[LangGraph workflow]
-    G --> T1["Eligibility rules<br/>schemes.json"]
-    G --> T2["Hybrid RAG<br/>BM25 + bge-small + reranker<br/>chunks.json / embeddings.npy"]
-    G --> T3[Document checklist]
-    G --> T4[Official link lookup]
-  end
-  G -- "chat/completions" --> LLM["IIT KGP Qwen3-8B<br/>103.42.50.41:103X"]
-  P["Offline: scripts/ingest.py<br/>PDFs → chunks → embeddings"] -.-> T2
+  U[Citizen browser] --> FE["React app<br/>GitHub Pages"]
+  FE -- "POST /api/chat" --> BE["FastAPI backend<br/>Render (Docker)<br/>holds API keys + certificates"]
+  BE --> G[LangGraph workflow]
+  G --> T1["Eligibility rules<br/>schemes.json"]
+  G --> T2["Document search<br/>chunks.json + embeddings.npy"]
+  G -- "chat (2 calls per message)" --> LLM["Course LLM<br/>Qwen3-8B"]
+  T2 -- "embed the question" --> EMB["Course embedding API (VM02)<br/>bge-small-en-v1.5"]
+  P["Offline: download_pdfs.py → ingest.py<br/>33 PDFs → 1,884 chunks"] -.-> T2
 ```
 
-**No separate database.** The scheme rules (`schemes.json`) and RAG index (`chunks.json`, `embeddings.npy`) are files that ship inside the backend container. Embeddings come from the course embedding API (VM02, `bge-small-en-v1.5`); if it is down, the backend runs the same model locally with fastembed and gets identical vectors. Sessions live in server memory and are cleared on reset.
+- **No database.** Scheme rules and the search index are files inside the backend container. Chat sessions live in server memory and are cleared on reset or restart.
+- **Eligibility is decided by rules, never by the AI.** The AI only reads the profile and writes the reply from the rule results and cited PDF passages.
 
-### Agent workflow (one chat turn)
+### One chat message
 
 ```mermaid
 flowchart TD
-  A[User message] --> B["Intake agent (LLM)<br/>extract profile JSON + intent"]
-  B -->|out of scope| R[Polite refusal]
-  B -->|key detail missing| F["Ask ONE follow-up<br/>(user may skip)"]
-  B -->|enough info| P[Planner]
-  P --> E["Executor: 4 tools<br/>eligibility · RAG · docs · links"]
-  E --> AN["Answer agent (LLM)<br/>only tool results, cited [S1]"]
-  AN --> C{"Critic (rules)<br/>hallucinated scheme?<br/>'you are eligible'?"}
-  C -->|fail, steps < 10| AN
-  C -->|pass| OUT[JSON → React cards]
+  M[User message] --> I["Intake 🧠<br/>message → profile + intent<br/>(skipped when a button was tapped)"]
+  I -->|not about schemes| R[Polite refusal]
+  I -->|"don't know farmer / student / business"| Q[Ask that one question]
+  I -->|"'How do I apply?' with several cards"| W["Which scheme? (buttons)"]
+  I -->|asks about one scheme| ST["Scheme tools<br/>that scheme + its PDFs only"]
+  I -->|otherwise| P[Planner] --> E["Executor<br/>rules · search · documents · link"]
+  E --> A["Answer 🧠<br/>short reply with citations [S1]"]
+  ST --> A
+  A --> C{"Critic (rules)<br/>unknown scheme named?<br/>'you are eligible'?"}
+  C -->|problem| A
+  C -->|OK| S["Suggest<br/>at most one follow-up question + buttons"]
+  S --> OUT[Reply + scheme cards + sources]
 ```
 
-Each turn makes only 2 LLM calls, because the group key allows 1 active request at a time. Eligibility is decided by rules, never by the model.
+🧠 = calls the AI. Only Intake and Answer do, because the course key allows one AI request at a time.
 
 ## Run locally
 
 ```bash
-# backend
+# backend (Python 3.11+)
 cd backend
 python -m venv .venv && .venv/Scripts/pip install -r requirements.txt   # mac/linux: .venv/bin/pip
-cp ../.env.example .env        # fill key, URL and cert path (or leave empty for MOCK mode)
-.venv/Scripts/python ../scripts/test_llm.py        # 1. prove the API works
-.venv/Scripts/python ../scripts/download_pdfs.py   # 2a. fetch the PDFs listed in data/sources.json
-.venv/Scripts/python ../scripts/ingest.py          # 2b. build RAG index from data/raw
-.venv/Scripts/uvicorn app.main:app --reload        # 3. http://localhost:8000/health
+cp ../.env.example .env                       # fill in keys and certificate paths (empty = MOCK mode)
+.venv/Scripts/python ../scripts/test_llm.py   # check the AI connection
+.venv/Scripts/uvicorn app.main:app --reload   # http://localhost:8000/health
 
-# frontend (needs Node 20+)
-cd frontend && npm install && npm run dev          # http://localhost:5173
+# frontend (Node 20+)
+cd frontend && npm install && npm run dev     # http://localhost:5173
 ```
 
-## Deploy
-1. **Backend → Render:** New → Blueprint → pick this repo (it reads `render.yaml`). Set `MODEL_BASE_URL`, `MODEL_API_KEY` and `FRONTEND_ORIGIN=https://<user>.github.io`, and upload the `.crt` as Secret File `ca.crt`. Then open `/health`.
-2. **Frontend → GitHub Pages:** Repo Settings → Pages → Source: *GitHub Actions*. Settings → Variables → add `VITE_API_URL=https://<your-render-app>.onrender.com`. Push to `main`.
+The search index (`chunks.json`, `embeddings.npy`) is already in git. To rebuild it, see [Adding a new PDF](docs/RAG_AND_EMBEDDINGS.md#9-adding-a-new-pdf).
 
-## Adding data
-- Schemes and rules: `backend/data/schemes.json` (fields follow the `Scheme_Data_Schema` sheet). Set `verification_status` to `verified` only after checking against myScheme or the official guideline.
-- Documents: `backend/data/sources.json` lists every PDF we collected (87), each tagged `use`, `later`, `not_citizen`, `need_ocr`, `not_english` or `broken` with a note. `scripts/download_pdfs.py` downloads the `use` ones (`--all` for every one) into `backend/data/raw/`, then `scripts/ingest.py` rebuilds the index. Raw PDFs are git-ignored (about 75 MB); commit `chunks.json` and `embeddings.npy`.
-- To add a scheme: add it to `schemes.json`, add its PDF to `sources.json` with status `use` and its scheme ID, then run both scripts.
-- Eval: fill `gold_scheme_ids` in `eval/eval_set.csv`, then run `eval/run_eval.py`.
+## Deploy
+
+**Backend → Render:** New → Blueprint → pick this repo (it reads `render.yaml`). Then:
+- Env vars: `MODEL_BASE_URL`, `MODEL_API_KEY`, `EMBED_API_KEY`, `FRONTEND_ORIGIN=https://<user>.github.io`
+- Secret Files: the LLM certificate as `ca.crt`, the embedding certificate (`vm02-ca.crt`) as `embed-ca.crt`
+- Open `/health` to check.
+
+**Frontend → GitHub Pages:** Settings → Pages → Source: *GitHub Actions*. Settings → Variables → `VITE_API_URL=https://<your-app>.onrender.com`. Every push to `main` redeploys.
+
+## Data
+
+| File | What it holds |
+|---|---|
+| `backend/data/schemes.json` | 28 schemes: eligibility rules, benefits, documents, official links, short names |
+| `backend/data/sources.json` | All 87 PDFs we collected, each tagged (`use`, `later`, `need_ocr`…) |
+| `backend/data/chunks.json` + `embeddings.npy` | The search index built from the 33 `use` PDFs |
+
+Scheme data is a draft (`needs_review`) until someone checks each scheme against the official guideline.
+
+## Tests
+
+```bash
+cd backend
+.venv/Scripts/python tests/test_followups.py   # follow-up questions: every conversation ends, nothing asked twice
+.venv/Scripts/python ../eval/retrieval_eval.py # document search: right scheme found? (15/15 today)
+.venv/Scripts/python ../eval/run_eval.py       # whole chat: needs gold_scheme_ids filled in eval/eval_set.csv
+```
 
 ## Responsible AI
-We say "may be eligible", never "you are eligible". We never collect Aadhaar, bank or phone numbers. Every answer shows its sources, a data-as-of date and an official link, and points to a CSC for help.
+
+We say "may be eligible", never "you are eligible". We never ask for Aadhaar, bank or phone numbers, and profiles are not stored after the session. Every answer shows its sources, a data-as-of date and an official link, and points to a CSC for help.

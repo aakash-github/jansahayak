@@ -142,6 +142,8 @@ Before checking rules, schemes are filtered by user type (farmer/student/busines
 
 **RAG = Retrieval-Augmented Generation.** In simple words: *before the AI answers, we find the relevant paragraphs from official documents and give them to the AI to read.* So the answer is based on real documents, not the AI's memory.
 
+> 📘 Full details (settings, storage, search quality, known weaknesses, adding a new PDF): [Document search (RAG) and embeddings](RAG_AND_EMBEDDINGS.md).
+
 ### Part A: Preparing documents (done once, offline)
 
 Run `python scripts/download_pdfs.py` (fetches every PDF tagged `use` in `sources.json`), then `python scripts/ingest.py`. It does this:
@@ -149,7 +151,7 @@ Run `python scripts/download_pdfs.py` (fetches every PDF tagged `use` in `source
 ```mermaid
 flowchart LR
   A["📄 PDF<br/>FARM-01__pmkisan.pdf"] --> B["Extract text<br/>page by page"]
-  B --> C["✂️ Cut into chunks<br/>~350 words each"]
+  B --> C["✂️ Cut into chunks<br/>300 words each"]
   C --> D["🏷️ Label each chunk<br/>scheme, section, page, link"]
   D --> E["🔢 Turn each chunk<br/>into numbers (embedding)"]
   E --> F["💾 Save<br/>chunks.json + embeddings.npy"]
@@ -159,9 +161,9 @@ flowchart LR
 2. **Extract text:** read each PDF page and remember the page number (for citations like "p. 4").
 3. **Chunking:** cut the text into pieces of about **300 words**. Each piece repeats the last **50 words** of the previous one, so a sentence cut at the edge isn't lost. Pieces longer than the embedding model's limit (512 tokens, which happens with badly extracted text) are halved until they fit. Blank or scanned pages are skipped.
 4. **Labelling:** each chunk gets a section tag (eligibility / benefit / documents / how to apply / exclusion / FAQ / general), guessed from words near its start, plus the scheme ID, page and source link.
-5. **Embedding:** the model `bge-small-en-v1.5` turns each chunk into a list of 384 numbers that describe its *meaning*. Chunks with similar meaning get similar numbers. We call the **course embedding API** (IIT KGP VM02, 16 chunks per request); if it is down, the same model runs on our own server and gives identical numbers. Today: 33 PDFs → 1,884 chunks, built in about 2.5 minutes.
+5. **Embedding:** the model `bge-small-en-v1.5` turns each chunk into a list of 384 numbers that describe its *meaning*. Chunks with similar meaning get similar numbers. We call the **course embedding API** (IIT KGP VM02, 16 chunks per request); if it is down, the same model can run locally and gives identical numbers (on Render this is switched off to save memory, so search falls back to keywords). Today: 33 PDFs → 1,884 chunks, built in about 2.5 minutes.
 
-> A scheme with no PDF still gets 3 starter chunks (benefit, eligibility, documents) from `schemes.json`, so search always has something.
+> If a scheme has no PDF, ingest makes 3 starter chunks (benefit, eligibility, documents) from `schemes.json`. Today all 28 schemes have PDFs, so this is not used.
 
 ### Part B: Searching (on every question)
 
@@ -262,7 +264,7 @@ Time: about **6 seconds**. The first message after the server has been idle 15+ 
 | Planner always uses the same plan | OK for now; could let the AI choose tools later |
 | The AI sees the profile, not the full chat history | Fine for scheme finding; add history if needed |
 | Hindi + English only (screen labels are English; chat replies follow the user's language) | Add more Indian languages |
-| Evaluation answers not filled | Fill `eval/eval_set.csv`, run `eval/run_eval.py` |
+| Whole-chat evaluation answers not filled (document search has its own check: `eval/retrieval_eval.py`, 15/15) | Fill `eval/eval_set.csv`, run `eval/run_eval.py` |
 
 ---
 
@@ -274,7 +276,7 @@ Time: about **6 seconds**. The first message after the server has been idle 15+ 
 | **Agent** | One step with one job, e.g. "understand the user" |
 | **LangGraph** | Library that connects the agents like a flowchart |
 | **RAG** | Find relevant document text first, then let the AI answer using it |
-| **Chunk** | A small piece (~350 words) cut from a long document |
+| **Chunk** | A small piece (300 words) cut from a long document |
 | **Embedding** | A list of numbers representing a text's meaning |
 | **BM25** | Classic keyword search (like a search engine) |
 | **Re-ranker** | A model that re-orders search results by how well they match |
