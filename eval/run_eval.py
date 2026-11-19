@@ -55,7 +55,7 @@ def run_query(client: TestClient, row: dict) -> dict:
     return {"resp": r, "trace": traces[-1], "traces": traces, "ms": ms}
 
 
-def check(row: dict, out: dict) -> dict:
+def check(row: dict, out: dict, recall: bool = True) -> dict:
     r, tr = out["resp"], out["trace"]
     answer = r.get("message", "")
     low = answer.lower()
@@ -85,7 +85,7 @@ def check(row: dict, out: dict) -> dict:
             failure = "reasoning_error"
         else:  # only facts missing: was the fact in what the AI was given?
             given = " ".join(retrieval.CHUNKS[i]["text"] for i in tr.get("evidence_chunks", [])).lower()
-            for sid in cards:
+            for sid in (c for c in cards if c in eligibility.BY_ID):
                 s = eligibility.BY_ID[sid]
                 given += " " + " ".join([s["benefit"], " ".join(s["required_documents"]), s["source_url"]]).lower()
             in_input = all(any(a.lower() in given for a in f) for f in facts_missing)
@@ -93,7 +93,7 @@ def check(row: dict, out: dict) -> dict:
 
     # retrieval layer alone: search the raw (last) question over ALL chunks
     rec4 = rec10 = None
-    if gold:
+    if gold and recall:
         q = split(row["query"], "||")[-1]
         top = [c["scheme_id"] for c in retrieval.search(q, None, k=10)]
         rec4 = sum(g in top[:4] for g in gold) / len(gold)

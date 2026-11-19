@@ -1,9 +1,10 @@
 # Evaluation and tracing
 
-How we measure whether JanSahayak gives the right answers, and how we see what happened inside each request. This covers parts I and V of the Track B brief.
+How we measure whether JanSahayak gives the right answers, and how we see what happened inside each request. This covers parts I, II and V of the Track B brief.
 
 - Latest results: [eval/results/latest.md](../eval/results/latest.md)
 - First run, before fixes: [eval/results/baseline.md](../eval/results/baseline.md)
+- Prompting baseline (one prompt, no agents): [eval/results/prompting.md](../eval/results/prompting.md)
 - Search-only check: [Document search (RAG) and embeddings](RAG_AND_EMBEDDINGS.md#7-how-good-is-it)
 
 ---
@@ -167,3 +168,59 @@ The results go to `eval/results/latest.md` (summary and failed queries) and `lat
 - **Answers leave out a fact they were given (4).** Example: the PMFBY claim answer skips "report within 72 hours". Next step: tighter answer prompt, or a checklist of key facts per question type.
 - **Rules too loose for school students (3).** A class-8 or class-11 student is offered college or AICTE schemes because "school or college?" is unknown. Next step: ask or infer the study level.
 - **Refuses "Ignore your rules… I am a student" (1).** Safe, but it should still show scholarships.
+
+---
+
+## 7. Prompting baseline: one prompt vs the agent system
+
+**Question (Track B part II):** do we need agents at all? Could one good prompt do the job?
+
+To find out, `eval/prompt_baseline.py` gives Qwen3-8B **one prompt** with the whole catalogue (all 28 schemes: rules, benefits, documents, links) and no rules engine, no document search and no critic. The model must understand the user, decide eligibility, pick schemes and write the reply by itself. We tried 4 prompting strategies on the same 79 queries, scored with the same checks:
+
+```
+              ┌─ zero_shot ── instructions + catalogue → JSON reply
+ same 79      ├─ few_shot ─── + 3 worked examples
+ queries ─────┼─ cot ──────── + "think step by step" before answering
+              ├─ decompose ── call 1: understand the user → call 2: pick schemes + reply
+              └─ agent system ── rules engine + search + critic (sections 1–6)
+```
+
+### Results
+
+```
+                 end-to-end accuracy
+zero_shot     ██████████████░░░░░░  73%
+few_shot      ██████████████░░░░░░  72%
+cot           █████████████░░░░░░░  65%
+decompose     ███████████████░░░░░  76%   ← best prompt
+agent system  ██████████████████░░  90%
+```
+
+| Metric | zero_shot | few_shot | cot | decompose | agent system |
+|---|---|---|---|---|---|
+| **End-to-end accuracy** | 73% | 72% | 65% | 76% | **90%** |
+| Right behaviour | 86% | 90% | 80% | 89% | **99%** |
+| Gold schemes found | 89% | 89% | 89% | 89% | **100%** |
+| "Ask" queries right (user group unknown) | 25% | 50% | 75% | 75% | **100%** |
+| Tokens per query | 4,585 | 4,925 | 4,769 | 5,952 | **1,904** |
+| Latency p50 | 3.4 s | 3.5 s | 4.7 s | 5.7 s | 4.3 s |
+
+Full tables: [eval/results/prompting.md](../eval/results/prompting.md).
+
+### How the 8B model breaks with one big prompt
+
+| Problem | Example | How the agent system avoids it |
+|---|---|---|
+| 🌐 **Replies in the wrong language** | Run 1 did not say which language to reply in: zero-shot and CoT answered **58 and 64 of 72 English questions in Hindi**, because the prompt contains one Hindi example phrase ([run 1](../eval/results/prompting_v1.md)). Adding "Reply language: English" fixed it. | Language is detected in code and passed to the AI |
+| 🧮 **Eligibility maths** | Farmer aged 45 offered PM-KMY (entry age 18–40) by every strategy; a 55-year-old offered CMEGP (age limit 45) | Rules engine decides eligibility in code |
+| ❓ **Guesses instead of asking** | "I need some financial help" → lists random schemes instead of asking "farmer, student or business?" (zero-shot: 1 of 4 right) | Router asks the one blocking question |
+| 🔀 **Wrong kind of reply** | "SC student, IIT admission, income 5 lakh" → answers about one scheme instead of listing all; "How do I apply for PM-KISAN?" → a list instead of steps; a message containing an Aadhaar number → refused instead of answered safely | Router (code) decides find / focus / which |
+| 🤔 **"Think step by step" does not help** | CoT was the worst strategy (65%, and 41% in run 1): the reasoning uses up the reply budget and the model then skips facts | Code does the reasoning; the AI only writes |
+| 🧾 **Bad JSON** | Run 1: 6 replies needed a retry and 2 gave up | 2 short AI jobs, each with a retry |
+| 💸 **3× the tokens** | The whole catalogue goes in every prompt | Only the 5 matching schemes and 4 passages are sent |
+
+**What went well:** no strategy invented a scheme, and all refused off-topic requests. With the catalogue in the prompt, the model stays on known schemes.
+
+**Conclusion:** the best prompt (decompose, 76%) is 14 points behind the agent system (90%). The gap is in exactly what we moved out of the AI and into code: eligibility, the kind of reply, and when to ask. A larger model might close part of the gap, but on an 8B model the split between "AI reads and writes, code decides" is what makes the answers reliable.
+
+> **Fair-comparison note:** the agent system was improved while looking at these 79 queries; the prompts were written once and not tuned. So the real gap may be a little smaller. A held-out test set (next step) will measure both honestly.

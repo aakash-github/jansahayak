@@ -6,7 +6,7 @@ A chatbot that helps Indian citizens (farmers, students, entrepreneurs) find gov
 - [How it works (simplified)](docs/HOW_IT_WORKS_SIMPLIFIED.md): every piece in one page of diagrams, start here
 - [How JanSahayak works](docs/HOW_IT_WORKS.md): the full backend in plain English (chat flow, eligibility rules, follow-up questions)
 - [Document search (RAG) and embeddings](docs/RAG_AND_EMBEDDINGS.md): how PDFs become searchable, how good search is, how to add a PDF
-- [Evaluation and tracing](docs/EVALUATION.md): the 79-query test set, metrics, failure types, request traces · [latest results](eval/results/latest.md)
+- [Evaluation and tracing](docs/EVALUATION.md): the 79-query test set, metrics, failure types, request traces, prompting baseline · [latest results](eval/results/latest.md)
 
 ## Architecture
 
@@ -87,6 +87,7 @@ cd backend
 .venv/Scripts/python tests/test_followups.py   # follow-up questions: every conversation ends, nothing asked twice
 .venv/Scripts/python ../eval/retrieval_eval.py # document search: right scheme found? (15/15 today)
 .venv/Scripts/python ../eval/run_eval.py       # whole chat on 79 queries with gold answers (~10 min, real AI)
+.venv/Scripts/python ../eval/prompt_baseline.py # one prompt, no agents, 4 prompting strategies (~45 min, real AI)
 ```
 
 Every reply includes a `trace` (steps, timings, AI calls, tokens, tools, errors; no message text). The last 200 are at `GET /api/traces`. Optional LangSmith dashboard: see [Evaluation and tracing](docs/EVALUATION.md#4-tracing-seeing-inside-each-request).
