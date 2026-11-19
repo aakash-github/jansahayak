@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from . import embed, llm
+from . import embed, llm, trace
 from .agents import DATA_AS_OF, GRAPH
 
 app = FastAPI(title="JanSahayak API")
@@ -64,14 +64,17 @@ async def chat(body: ChatIn):
     if body.set:  # remember the button text so the details panel shows "Up to ₹2.5 lakh", not "250000"
         for k, v in body.set.items():
             sess["labels"][k] = [v, body.message[:60]]
+    trace.start()
     try:
         out = await GRAPH.ainvoke({"message": message, "profile": sess["profile"], "preset": body.set,
                                    "focus": body.scheme_id, "last_ids": sess["last_ids"],
                                    "asked": sess["asked"], "lang": sess["lang"], "steps": 0})
     except Exception as e:
+        trace.error("tool_error", f"graph: {type(e).__name__}: {e}")
         return {"session_id": sid, "message": f"Sorry, the AI service is busy right now ({type(e).__name__}). Please try again.",
                 "profile": sess["profile"], "profile_labels": {}, "schemes": [], "sources": [], "followup": None,
-                "needs_followup": False, "mode": "error", "data_as_of": DATA_AS_OF}
+                "needs_followup": False, "mode": "error", "data_as_of": DATA_AS_OF,
+                "trace": trace.finish(mode="error", schemes=[])}
     sess["profile"], sess["asked"] = out.get("profile", {}), out.get("asked", sess["asked"])
     sess["lang"] = out.get("lang", sess["lang"])
     mode = out.get("mode", "find")
@@ -82,17 +85,37 @@ async def chat(body: ChatIn):
     blocking = bool(out.get("blocking"))
     labels = {k: lab for k, (v, lab) in sess["labels"].items() if sess["profile"].get(k) == v}  # drop stale labels
     answer = out.get("answer", "")
+    schemes = [] if blocking else out.get("results", [])
+    summary = trace.finish(mode=mode, schemes=[r["scheme_id"] for r in schemes],
+                           followup=(out.get("followup") or {}).get("field"))
     return {
         "session_id": sid,
         "message": answer,
-        "mode": mode,                      # find | focus | which
+        "mode": mode,                      # find | focus | which | ask | refuse | error
         "profile": sess["profile"],
         "profile_labels": labels,
         "followup": out.get("followup"),   # {field, question, why, helps_names, input, options:[{label, set, scheme_id?}]}
         "needs_followup": blocking,        # True = no schemes in this reply (a question must be answered first)
-        "schemes": [] if blocking else out.get("results", []),
+        "schemes": schemes,
         "sources": _sources(out.get("evidence", []), answer),
         "data_as_of": DATA_AS_OF,
+        "trace": summary,                  # timings, AI calls, tokens, tools, errors (no message text)
+    }
+
+
+@app.get("/api/traces")
+def traces(n: int = 50):
+    """Last n request traces plus averages: a simple built-in trace dashboard (JSON)."""
+    rows = list(trace.RECENT)[-n:]
+    k = max(len(rows), 1)
+    return {
+        "count": len(rows),
+        "avg_ms": round(sum(r["ms"] for r in rows) / k),
+        "avg_llm_calls": round(sum(r["llm_calls"] for r in rows) / k, 2),
+        "avg_tool_calls": round(sum(r["tool_calls"] for r in rows) / k, 2),
+        "avg_tokens": round(sum(r["tokens_in"] + r["tokens_out"] for r in rows) / k),
+        "errors": sum(len(r["errors"]) for r in rows),
+        "traces": rows[::-1],
     }
 
 

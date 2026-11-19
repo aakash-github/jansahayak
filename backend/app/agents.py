@@ -18,7 +18,7 @@ from typing import TypedDict
 
 from langgraph.graph import END, StateGraph
 
-from . import eligibility, followups, llm, retrieval
+from . import eligibility, followups, llm, retrieval, trace
 
 MAX_STEPS = 10
 DATA_AS_OF = "2026-11-13"
@@ -35,7 +35,7 @@ class State(TypedDict, total=False):
     profile: dict
     asked: list
     intent: str
-    mode: str            # 'find' | 'focus' | 'which'
+    mode: str            # 'find' | 'focus' | 'which' | 'ask' | 'refuse'
     focus: str           # scheme ID the user is asking about (focus mode)
     last_ids: list       # schemes shown in the previous 'find' answer (to resolve "How do I apply?")
     preset: dict         # values from a tapped answer button: stored directly, no AI call
@@ -188,7 +188,8 @@ def detect_lang(text: str, previous: str = "en") -> str:
 def ask(s: State) -> State:
     """Blocking question: farmer, student or business? (with tap buttons)"""
     q = followups.build("occupation", s.get("lang", "en"))
-    return {"followup": q, "blocking": True, "asked": s.get("asked", []) + ["occupation"], "answer": q["question"]}
+    return {"followup": q, "blocking": True, "asked": s.get("asked", []) + ["occupation"], "answer": q["question"],
+            "mode": "ask"}
 
 
 def which(s: State) -> State:
@@ -212,7 +213,7 @@ def suggest(s: State) -> State:
 
 
 def refuse(s: State) -> State:
-    return {"answer": FIXED["refuse"][s.get("lang", "en")]}
+    return {"answer": FIXED["refuse"][s.get("lang", "en")], "mode": "refuse"}
 
 
 def planner(s: State) -> State:
@@ -223,16 +224,23 @@ def planner(s: State) -> State:
 def _card(r: dict) -> dict:
     """Add display details to an eligibility result."""
     sch = eligibility.BY_ID[r["scheme_id"]]
+    with trace.tool("documents"):
+        docs = eligibility.documents_for(r["scheme_id"])
+    with trace.tool("links"):
+        link = eligibility.apply_link(r["scheme_id"])
     return {**r, "name": sch["scheme_name"], "short_name": sch.get("short_name", sch["scheme_name"]),
-            "benefit": sch["benefit"], "documents": eligibility.documents_for(r["scheme_id"]),
-            "link": eligibility.apply_link(r["scheme_id"])}
+            "benefit": sch["benefit"], "documents": docs, "link": link}
 
 
 def executor(s: State) -> State:
-    all_results = eligibility.find_schemes(s["profile"], limit=100)
-    results = [_card(r) for r in all_results[:5]]
+    with trace.tool("eligibility"):
+        all_results = eligibility.find_schemes(s["profile"], limit=100)
+    results = [_card(r) for r in all_results[:5]]  # _card runs the documents + links tools
     ids = [r["scheme_id"] for r in results]
-    evidence = retrieval.search(s["message"] + " " + " ".join(r["name"] for r in results), ids, k=4)
+    with trace.tool("search"):
+        evidence = retrieval.search(s["message"] + " " + " ".join(r["name"] for r in results), ids, k=4) if ids else []
+    trace.put("evidence_ids", [c["scheme_id"] for c in evidence])
+    trace.put("evidence_chunks", [c["id"] for c in evidence])
     return {"results": results, "all_results": all_results, "total": len(all_results),
             "evidence": evidence, "steps": s.get("steps", 0) + 1}
 
@@ -240,12 +248,17 @@ def executor(s: State) -> State:
 def scheme_tools(s: State) -> State:
     """Tools for ONE scheme: its eligibility, documents, link, and search inside its own PDFs only."""
     sid = s["focus"]
-    r = _card(eligibility.evaluate(eligibility.BY_ID[sid], s["profile"]))
+    with trace.tool("eligibility"):
+        r = eligibility.evaluate(eligibility.BY_ID[sid], s["profile"])
+    r = _card(r)
     t = s["message"].lower()
     qtype = "documents" if any(w in t for w in DOC_WORDS) else "apply" if any(w in t for w in APPLY_WORDS) else "general"
     steer = {"apply": "how to apply application procedure registration online portal",
              "documents": "documents required certificate proof", "general": ""}[qtype]
-    evidence = retrieval.search(f"{s['message']} {r['name']} {steer}", [sid], k=4)
+    with trace.tool("search"):
+        evidence = retrieval.search(f"{s['message']} {r['name']} {steer}", [sid], k=4)
+    trace.put("evidence_ids", [c["scheme_id"] for c in evidence])
+    trace.put("evidence_chunks", [c["id"] for c in evidence])
     return {"results": [r], "all_results": [], "total": 1, "qtype": qtype, "evidence": evidence,
             "steps": s.get("steps", 0) + 1}
 
@@ -312,7 +325,13 @@ def critic(s: State) -> State:
 
 
 def route_after_critic(s: State) -> str:
-    return "answer" if s["critic_notes"] and s["steps"] < MAX_STEPS - 1 else "suggest"
+    if s["critic_notes"] and s["steps"] < MAX_STEPS - 1:
+        t = trace._t()
+        if t is not None:
+            t["critic_retries"] += 1
+        return "answer"
+    trace.put("critic_unresolved", s["critic_notes"])  # non-empty = the answer still breaks a rule (hallucination)
+    return "suggest"
 
 
 def build_graph():
@@ -320,7 +339,7 @@ def build_graph():
     for name, fn in [("intake", intake), ("ask", ask), ("which", which), ("refuse", refuse), ("planner", planner),
                      ("executor", executor), ("scheme_tools", scheme_tools), ("answer", answer), ("critic", critic),
                      ("suggest", suggest)]:
-        g.add_node(name, fn)
+        g.add_node(name, trace.node(name, fn))  # each step's time goes into the request trace
     g.set_entry_point("intake")
     g.add_conditional_edges("intake", route_after_intake,
                             {"ask": "ask", "which": "which", "scheme_tools": "scheme_tools", "planner": "planner", "refuse": "refuse"})
