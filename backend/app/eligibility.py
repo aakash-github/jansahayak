@@ -46,8 +46,16 @@ def evaluate(scheme: dict, profile: dict) -> dict:
     return {"scheme_id": scheme["scheme_id"], "status": status, "conditions": conditions}
 
 
-def find_schemes(profile: dict, limit: int = 5) -> list[dict]:
-    """Tool 1: filter catalogue by group/state, then evaluate rules. Best matches first."""
+def topic_hit(scheme: dict, text: str) -> bool:
+    """Does the message talk about this scheme's topic? ('irrigation' -> Per Drop More Crop)"""
+    t = (text or "").lower()
+    return bool(t) and any(w.lower() in t for w in scheme.get("topics", []) + scheme.get("aliases", []))
+
+
+def find_schemes(profile: dict, limit: int = 5, text: str = "") -> list[dict]:
+    """Tool 1: filter catalogue by group/state, then evaluate rules. Best matches first.
+    `text` = the user's message: schemes about what they asked (e.g. irrigation) move up,
+    but never above schemes that the rules rule out."""
     group = (profile.get("occupation") or "").lower()
     state = (profile.get("state") or "").lower()
     out = []
@@ -59,8 +67,10 @@ def find_schemes(profile: dict, limit: int = 5) -> list[dict]:
         out.append(evaluate(s, profile))
     rank = {"potentially_eligible": 0, "more_info_needed": 1, "appears_not_eligible": 2}
     count = lambda r, res: sum(c["result"] == res and c["field"] != "occupation" for c in r["conditions"])
-    # best status first; then fewer open questions; then more specific matches (category, income...)
-    return sorted(out, key=lambda r: (rank[r["status"]], count(r, "unknown"), -count(r, "met")))[:limit]
+    hit = {r["scheme_id"]: topic_hit(BY_ID[r["scheme_id"]], text) for r in out}
+    # not ruled out first; then about the topic asked; then best status; fewer open questions; more matches
+    return sorted(out, key=lambda r: (r["status"] == "appears_not_eligible", not hit[r["scheme_id"]],
+                                      rank[r["status"]], count(r, "unknown"), -count(r, "met")))[:limit]
 
 
 def documents_for(scheme_id: str) -> list[str]:
@@ -71,6 +81,13 @@ def documents_for(scheme_id: str) -> list[str]:
 def apply_link(scheme_id: str) -> str:
     """Tool 4: official apply / info link."""
     return BY_ID[scheme_id].get("official_url", "https://www.myscheme.gov.in/")
+
+
+def match_all(text: str) -> list[str]:
+    """Every scheme named in a message (by name or alias), e.g. 'compare PMEGP and CGTMSE' -> 2."""
+    t = text.lower()
+    return [s["scheme_id"] for s in SCHEMES
+            if any(a.lower() in t for a in s.get("aliases", []) + [s["scheme_name"].lower()])]
 
 
 def match_scheme(text: str) -> str | None:

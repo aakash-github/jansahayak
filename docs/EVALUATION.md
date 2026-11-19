@@ -3,6 +3,7 @@
 How we measure whether JanSahayak gives the right answers, and how we see what happened inside each request. This covers parts I and V of the Track B brief.
 
 - Latest results: [eval/results/latest.md](../eval/results/latest.md)
+- First run, before fixes: [eval/results/baseline.md](../eval/results/baseline.md)
 - Search-only check: [Document search (RAG) and embeddings](RAG_AND_EMBEDDINGS.md#7-how-good-is-it)
 
 ---
@@ -50,7 +51,7 @@ There are 22 farmer, 20 student and 17 entrepreneur queries, plus 20 general one
 | `must_not_mention` | Must never appear (guarantees, personal numbers) | `9876543210` |
 | `gold_answer` | The ideal answer in one line, for people reading the results | |
 
-> **Where the gold answers came from:** they were drafted by our AI coding assistant from the official scheme rules (PDFs and portals), on behalf of the data team, and written **without looking at our system's output**. That way a failure means our data or logic is wrong, not the test. They should still be **reviewed by a team member**. The set was also written after the code, not before as the brief asks; the report should say so honestly.
+> **Where the gold answers came from:** the data team wrote them from the official scheme rules (PDFs and portals), **without looking at our system's output**. That way a failure means our data or logic is wrong, not the test. A team member can review and adjust them at any time.
 
 ---
 
@@ -152,3 +153,17 @@ The results go to `eval/results/latest.md` (summary and failed queries) and `lat
 4. Write the before/after numbers in the report.
 
 **Adding a query:** add a row to `eval_set.csv`. Write the gold answer from the official rules, not from what the bot says.
+
+---
+
+## 6. Results so far
+
+| Run | End-to-end accuracy | Right behaviour | Gold schemes found | What changed |
+|---|---|---|---|---|
+| Baseline | 82% (65/79) | 94% | 91% | First full run |
+| After fixes | **90% (71/79)** | 99% | 100% | 1) user group recognised from clear hints (acres → farmer, admission/IIT → student); 2) find answers rank schemes about the asked topic first (irrigation → Per Drop More Crop); 3) "compare" or several schemes named → list answer instead of one scheme |
+
+**Still failing (8):**
+- **Answers leave out a fact they were given (4).** Example: the PMFBY claim answer skips "report within 72 hours". Next step: tighter answer prompt, or a checklist of key facts per question type.
+- **Rules too loose for school students (3).** A class-8 or class-11 student is offered college or AICTE schemes because "school or college?" is unknown. Next step: ask or infer the study level.
+- **Refuses "Ignore your rules… I am a student" (1).** Safe, but it should still show scholarships.

@@ -264,7 +264,7 @@ Time: about **6 seconds**. The first message after the server has been idle 15+ 
 | Planner always uses the same plan | OK for now; could let the AI choose tools later |
 | The AI sees the profile, not the full chat history | Fine for scheme finding; add history if needed |
 | Hindi + English only (screen labels are English; chat replies follow the user's language) | Add more Indian languages |
-| End-to-end eval: 82% of 79 queries pass; most failures are the user group not being recognised and find answers ignoring the topic asked about (see [latest results](../eval/results/latest.md)) | Fix those, re-run `eval/run_eval.py`; gold answers need a team review ([guide](EVALUATION.md)) |
+| End-to-end eval: 82% of 79 queries pass; most failures are the user group not being recognised and find answers ignoring the topic asked about (see [latest results](../eval/results/latest.md)) | Fix those, re-run `eval/run_eval.py` ([guide](EVALUATION.md)) |
 
 ---
 

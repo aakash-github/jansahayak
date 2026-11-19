@@ -37,6 +37,13 @@
    "pm kisan",
    "kisan samman",
    "किसान सम्मान"
+  ],
+  "topics": [
+   "income support",
+   "6000",
+   "6,000",
+   "cash support",
+   "आय सहायता"
   ]
  },
  {
@@ -72,6 +79,13 @@
    "fasal bima",
    "crop insurance",
    "फसल बीमा"
+  ],
+  "topics": [
+   "insurance",
+   "crop loss",
+   "crop damage",
+   "damaged",
+   "बीमा"
   ]
  },
  {
@@ -112,6 +126,14 @@
    "kcc",
    "kisan credit",
    "किसान क्रेडिट"
+  ],
+  "topics": [
+   "credit",
+   "crop loan",
+   "farm loan",
+   "loan",
+   "ऋण",
+   "लोन"
   ]
  },
  {
@@ -330,6 +352,12 @@
    "pmegp",
    "employment generation programme",
    "prime minister's employment"
+  ],
+  "topics": [
+   "subsidy",
+   "new unit",
+   "manufactur",
+   "service business"
   ]
  },
  {
@@ -362,6 +390,11 @@
   "aliases": [
    "cgtmse",
    "credit guarantee"
+  ],
+  "topics": [
+   "collateral",
+   "guarantee",
+   "without security"
   ]
  },
  {
@@ -414,6 +447,11 @@
    "maan dhan",
    "kisan pension",
    "मानधन"
+  ],
+  "topics": [
+   "pension",
+   "पेंशन",
+   "old age"
   ]
  },
  {
@@ -457,6 +495,11 @@
    "sprinkler",
    "micro irrigation",
    "ड्रिप"
+  ],
+  "topics": [
+   "irrigation",
+   "water",
+   "सिंचाई"
   ]
  },
  {
@@ -492,6 +535,15 @@
    "farm machinery",
    "tractor subsidy",
    "agricultural mechani"
+  ],
+  "topics": [
+   "machinery",
+   "tractor",
+   "machine",
+   "equipment",
+   "harvester",
+   "मशीन",
+   "ट्रैक्टर"
   ]
  },
  {
@@ -531,6 +583,12 @@
    "namo drone",
    "drone didi",
    "ड्रोन दीदी"
+  ],
+  "topics": [
+   "drone",
+   "spraying",
+   "self help group",
+   "shg"
   ]
  },
  {
@@ -563,6 +621,12 @@
    "soil health",
    "soil test",
    "मृदा स्वास्थ्य"
+  ],
+  "topics": [
+   "soil",
+   "fertiliser",
+   "fertilizer",
+   "मिट्टी"
   ]
  },
  {
@@ -618,6 +682,12 @@
    "agri clinic",
    "agri-business centre",
    "agribusiness centre"
+  ],
+  "topics": [
+   "agri clinic",
+   "agribusiness",
+   "agri-business",
+   "agriculture graduate"
   ]
  },
  {
@@ -651,6 +721,17 @@
    "midh",
    "horticulture",
    "बागवानी"
+  ],
+  "topics": [
+   "vegetable",
+   "fruit",
+   "flower",
+   "polyhouse",
+   "greenhouse",
+   "nursery",
+   "cold storage",
+   "सब्ज़ी",
+   "फल"
   ]
  },
  {
@@ -976,6 +1057,11 @@
    "nmms",
    "means-cum-merit",
    "means cum merit"
+  ],
+  "topics": [
+   "class 8",
+   "class 9",
+   "nmms"
   ]
  },
  {
@@ -1062,6 +1148,13 @@
   "aliases": [
    "inspire",
    "she scholarship"
+  ],
+  "topics": [
+   "science",
+   "b.sc",
+   "bsc",
+   "physics",
+   "chemistry"
   ]
  },
  {
@@ -1115,6 +1208,14 @@
   "aliases": [
    "pmfme",
    "micro food processing"
+  ],
+  "topics": [
+   "food",
+   "pickle",
+   "bakery",
+   "snack",
+   "spice",
+   "achar"
   ]
  },
  {
@@ -1153,6 +1254,13 @@
   "aliases": [
    "sisfs",
    "seed fund"
+  ],
+  "topics": [
+   "seed fund",
+   "startup",
+   "start-up",
+   "prototype",
+   "incubator"
   ]
  },
  {
@@ -1193,6 +1301,15 @@
    "vishwakarma",
    "विश्वकर्मा",
    "up msme"
+  ],
+  "topics": [
+   "artisan",
+   "toolkit",
+   "carpenter",
+   "craft",
+   "potter",
+   "tailor",
+   "कारीगर"
   ]
  },
  {
@@ -1235,6 +1352,10 @@
   "aliases": [
    "cmegp",
    "chief minister employment"
+  ],
+  "topics": [
+   "subsidy",
+   "new unit"
   ]
  }
 ]
