@@ -20,9 +20,11 @@ Indian citizens miss government schemes they could get because the rules are spr
 ## What it refuses or never does
 - Off-topic requests (poems, coding, cricket…) → polite refusal.
 - Never says "you are eligible", only "you may be eligible", and always points to the official site or a CSC.
-- Never asks for, repeats or stores Aadhaar, bank or phone numbers. Profiles last only for the session.
-- Never names a scheme that is not in the catalogue. The critic checks for this.
-- Ignores instructions hidden in messages or documents ("ignore your rules…").
+- Never asks for, repeats or stores Aadhaar, bank, PAN or phone numbers. If a user types one, it is masked before the AI sees it. Profiles last only for the session.
+- Never names a scheme that is not in the catalogue, and never states an amount or limit that is not in the scheme data or documents. The critic checks both.
+- Ignores instructions hidden in messages or documents ("ignore your rules…"), but still helps if the user also says who they are.
+- Never approves, sanctions or guarantees anything. Schemes whose rules have not yet been checked by the team are labelled as such.
+- Details: [RESPONSIBLE_AI.md](../docs/RESPONSIBLE_AI.md).
 
 ## Inputs and outputs
 - **Input:** a chat message (or a tapped button).

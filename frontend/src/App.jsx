@@ -120,6 +120,10 @@ function SchemeCard({ s, onAsk, hi }) {
         <summary>📄 Documents to keep ready ({s.documents.length})</summary>
         <ul className="docs">{s.documents.map((d) => <li key={d}>{d}</li>)}</ul>
       </details>
+      {s.verified === false && (
+        <p className="unverified">{hi ? '⚠️ इस योजना के नियमों की हमारी टीम अभी जाँच कर रही है। आवेदन से पहले आधिकारिक साइट पर पुष्टि करें।'
+          : '⚠️ Our team is still checking these rules against the official guidelines. Confirm on the official site before applying.'}</p>
+      )}
       <div className="card-actions">
         {onAsk && <button className="act" onClick={() => onAsk(ask.apply(name), s.scheme_id)}>📝 {hi ? 'आवेदन कैसे करें' : 'How to apply'}</button>}
         {onAsk && <button className="act" onClick={() => onAsk(ask.docs(name), s.scheme_id)}>📄 {hi ? 'दस्तावेज़' : 'Documents'}</button>}
