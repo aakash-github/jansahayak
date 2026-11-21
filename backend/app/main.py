@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from . import embed, llm, trace
+from . import embed, llm, privacy, trace
 from .agents import DATA_AS_OF, GRAPH
 
 app = FastAPI(title="JanSahayak API")
@@ -57,13 +57,14 @@ def health():
 async def chat(body: ChatIn):
     sid = body.session_id or str(uuid.uuid4())
     sess = SESSIONS.setdefault(sid, _new_session())
-    message = body.message[:1000]
+    # Mask Aadhaar / phone / bank / PAN / e-mail BEFORE anything else sees the message (AI, session, traces).
+    message, pii_found = privacy.redact(body.message[:1000])
     if body.scheme_id and sess["pending"]:  # answer to "Which scheme do you mean?": re-ask the original question
         message = f"{sess['pending']} ({message})"
     sess["pending"] = None
     if body.set:  # remember the button text so the details panel shows "Up to ₹2.5 lakh", not "250000"
         for k, v in body.set.items():
-            sess["labels"][k] = [v, body.message[:60]]
+            sess["labels"][k] = [v, message[:60]]
     trace.start()
     try:
         out = await GRAPH.ainvoke({"message": message, "profile": sess["profile"], "preset": body.set,
@@ -85,9 +86,12 @@ async def chat(body: ChatIn):
     blocking = bool(out.get("blocking"))
     labels = {k: lab for k, (v, lab) in sess["labels"].items() if sess["profile"].get(k) == v}  # drop stale labels
     answer = out.get("answer", "")
+    if pii_found:  # tell the user we removed it (and why), in the chat language
+        answer = f"{privacy.NOTICE.get(sess['lang'], privacy.NOTICE['en'])}\n\n{answer}"
     schemes = [] if blocking else out.get("results", [])
     summary = trace.finish(mode=mode, schemes=[r["scheme_id"] for r in schemes],
-                           followup=(out.get("followup") or {}).get("field"))
+                           followup=(out.get("followup") or {}).get("field"),
+                           pii_masked=pii_found)  # kinds only (e.g. ["aadhaar"]), never the numbers
     return {
         "session_id": sid,
         "message": answer,
@@ -99,7 +103,8 @@ async def chat(body: ChatIn):
         "schemes": schemes,
         "sources": _sources(out.get("evidence", []), answer),
         "data_as_of": DATA_AS_OF,
-        "trace": summary,                  # timings, AI calls, tokens, tools, errors (no message text)
+        "pii_masked": bool(pii_found),     # True = a personal number was removed from the message
+        "trace": summary,                 # timings, AI calls, tokens, tools, errors (no message text)
     }
 
 
