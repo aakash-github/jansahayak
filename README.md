@@ -21,7 +21,7 @@ flowchart LR
   G --> T2["Document search<br/>chunks.json + embeddings.npy"]
   G -- "chat (2 calls per message)" --> LLM["Course LLM<br/>Qwen3-8B"]
   T2 -- "embed the question" --> EMB["Course embedding API (VM02)<br/>bge-small-en-v1.5"]
-  P["Offline: download_pdfs.py → ingest.py<br/>33 PDFs → 1,884 chunks"] -.-> T2
+  P["Offline: download_pdfs.py → ingest.py<br/>67 PDFs → 2,425 chunks"] -.-> T2
 ```
 
 - **No database.** Scheme rules and the search index are files inside the backend container. Chat sessions live in server memory and are cleared on reset or restart.

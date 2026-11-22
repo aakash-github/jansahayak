@@ -1,7 +1,7 @@
 """Search quality check: does document search find the right scheme's PDF?
 
 Each question below is written WITHOUT the scheme's name, so search has to understand it.
-We search all 1,884 chunks (no scheme filter) and check if the expected scheme is in the results.
+We search all chunks (no scheme filter) and check if the expected scheme is in the results.
 It compares 3 setups, so you can see what each search layer adds.
 
 Run from the repo root (needs backend/.env for the embedding API):
@@ -31,6 +31,13 @@ QUESTIONS = [
     ("seed funding for early stage startup incubator", "ENT-04"),
     ("collateral free loan guarantee for MSME", "ENT-02"),
     ("micro food processing unit credit linked subsidy", "ENT-03"),
+    # answers that exist only in documents added on 2026-11-22 (more documents for existing schemes)
+    ("ekyc by otp biometric at common service centre or face authentication app", "FARM-01"),
+    ("guarantee coverage for women led enterprises increased from 85% to 90%", "ENT-02"),
+    ("pass all subjects with minimum 60% marks to continue the science scholarship", "STU-12"),
+    ("soil samples taken from 15-20 cm depth in a grid of 2.5 hectares", "FARM-08"),
+    ("collateral free credit raised to 2 lakh per borrower under interest subvention", "FARM-03"),
+    ("entrepreneurship development programme training mandatory before loan release", "ENT-01"),
 ]
 
 SETUPS = [("Keywords only (BM25)", False, False),
@@ -64,4 +71,6 @@ if __name__ == "__main__":
     for name, dense, rerank in SETUPS:
         t1, t4 = run(dense, rerank, show_misses=rerank)
         print(f"{name:38s} {f'{t1}/{n}':>17s} {f'{t4}/{n}':>9s}")
-    print(f"\nquestion embeddings came from: {embed.last_source}")
+    print(f"\nembedding calls: {embed.STATS} (api = IIT KGP VM02), reranker: {retrieval.status()['reranker']}")
+    if embed.STATS["local"] or embed.STATS["failed"]:
+        print("WARNING: not every query was embedded by the IIT KGP API; the 'meaning' rows are not valid")

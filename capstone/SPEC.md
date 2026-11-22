@@ -40,7 +40,7 @@ A reply passes only if all four checks pass (see [EVALUATION.md](../docs/EVALUAT
 ## Constraints
 - Course-hosted Qwen3-8B (one request at a time per key) and the course embedding API (bge-small).
 - Free hosting: Render (512 MB) for the backend and GitHub Pages for the frontend.
-- 28 central and state schemes, with 33 official PDFs indexed (1,884 chunks).
+- 28 central and state schemes, with 67 official PDFs indexed (2,425 chunks). This is below the Track B target of 500–2,000 documents: few citizen-facing PDFs exist per scheme, many are scans or Hindi/Marathi only, and some sites block downloads.
 
 ## Success targets
 | Metric | Target | Now |

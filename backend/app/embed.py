@@ -1,8 +1,12 @@
 """Text -> 384 numbers (embeddings) with bge-small-en-v1.5.
 
-1st choice: the course-hosted embedding API (IIT KGP VM02), fast and uses no memory on our server.
-Fallback:   the same model run locally with fastembed (loaded only if the API fails).
-Both give identical vectors (tested: cosine similarity 1.0), so they can be mixed freely.
+Model compliance (Track B): embeddings must come from the IIT KGP embedding API (VM02).
+  - Default: API ONLY. If the API is missing or down, embed() raises and search falls back to
+    keywords (BM25); no other embedding service is ever used silently.
+  - Opt-in for offline laptop work only: EMBED_LOCAL_FALLBACK=1 runs the same model locally (fastembed).
+    It gives identical vectors (cosine 1.0), but it is NOT the course service, so every local call is
+    counted (STATS["local"]), shown in /health, in each request trace and in eval results, and
+    eval/run_eval.py refuses to run with it switched on.
 
 API rules from the quickstart: max 16 texts per request, each chunk within 512 tokens,
 retry briefly on capacity errors.
@@ -22,12 +26,16 @@ CA_CERT = os.getenv("EMBED_CA_CERT_PATH", "")       # path to vm02-ca.crt
 API_MODEL = os.getenv("EMBED_MODEL", "bge-small-en-v1.5")
 LOCAL_MODEL = "BAAI/bge-small-en-v1.5"
 BATCH = 16
-# Render free tier has 512 MB; loading the local model there (+150 MB) can crash the server.
-# Set EMBED_LOCAL_FALLBACK=0 on Render: if the API is down, search falls back to keywords (BM25) only.
-LOCAL_FALLBACK = os.getenv("EMBED_LOCAL_FALLBACK", "1") != "0"
+# OFF unless explicitly set to 1 (see module docstring). Also keeps Render's 512 MB free tier safe.
+LOCAL_FALLBACK = os.getenv("EMBED_LOCAL_FALLBACK", "0") == "1"
 
 _local = None
-last_source = "none"  # "api" or "local", handy for /health and debugging
+last_source = "none"  # "api" | "local" | "failed": what served the most recent call
+STATS = {"api": 0, "local": 0, "failed": 0}  # calls since start, for /health and eval results
+
+
+class EmbeddingUnavailable(RuntimeError):
+    """The course embedding API is not configured or failed, and the local fallback is off."""
 
 
 def _api(texts: list[str], timeout: float) -> np.ndarray:
@@ -57,17 +65,24 @@ def _local_embed(texts: list[str]) -> np.ndarray:
 
 
 def embed(texts: list[str], timeout: float = 10) -> np.ndarray:
-    """Embed texts; API first, local model if the API is not configured or fails."""
+    """Embed texts with the course API. The local model is used only if EMBED_LOCAL_FALLBACK=1."""
     global last_source
+    reason = "EMBED_BASE_URL / EMBED_API_KEY not set"
     if BASE_URL and API_KEY:
         try:
             v = _api(texts, timeout)
             last_source = "api"
+            STATS["api"] += 1
             return v
         except Exception as e:
-            print("embedding API failed:", type(e).__name__, e)
-            if not LOCAL_FALLBACK:
-                raise
+            reason = f"embedding API failed: {type(e).__name__} {e}"
+            print(reason)
+    if not LOCAL_FALLBACK:
+        last_source = "failed"
+        STATS["failed"] += 1
+        raise EmbeddingUnavailable(reason)
+    print("WARNING: using the LOCAL embedding model (not the IIT KGP API):", reason)
     v = _local_embed(texts)
     last_source = "local"
+    STATS["local"] += 1
     return v

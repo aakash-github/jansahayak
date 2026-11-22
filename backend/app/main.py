@@ -7,7 +7,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from . import embed, llm, privacy, trace
+from urllib.parse import urlparse
+
+from . import embed, llm, privacy, retrieval, trace
 from .agents import DATA_AS_OF, GRAPH
 
 app = FastAPI(title="JanSahayak API")
@@ -47,10 +49,24 @@ def _sources(evidence: list, answer: str) -> list:
     return out if cited else out[:2]
 
 
+def models() -> dict:
+    """Which models and services this server actually uses (model compliance). Never includes keys."""
+    host = lambda url: urlparse(url).netloc or "-"
+    return {
+        "llm": {"model": llm.MODEL, "endpoint": host(llm.BASE_URL), "mock": llm.MOCK, "ca_cert": bool(llm.CA_CERT)},
+        "embeddings": {"model": embed.API_MODEL, "endpoint": host(embed.BASE_URL),
+                       "api_configured": bool(embed.BASE_URL and embed.API_KEY), "ca_cert": bool(embed.CA_CERT),
+                       "local_fallback": embed.LOCAL_FALLBACK, "calls": dict(embed.STATS),
+                       "last_source": embed.last_source},
+        "search": retrieval.status(),
+    }
+
+
 @app.get("/health")
 def health():
-    return {"ok": True, "mock_llm": llm.MOCK, "embed_api": bool(embed.BASE_URL and embed.API_KEY),
-            "last_embed_source": embed.last_source}
+    m = models()
+    return {"ok": True, "mock_llm": llm.MOCK, "embed_api": m["embeddings"]["api_configured"],
+            "last_embed_source": embed.last_source, "models": m}
 
 
 @app.post("/api/chat")

@@ -110,6 +110,8 @@ We have two layers:
 | Field | Example |
 |---|---|
 | `path` | `intake > planner > executor > answer > critic > suggest` |
+| `plan` | `["eligibility: find farmer schemes the rules allow in Uttar Pradesh", "documents: …", "pick_best: …", "search: …"]` |
+| `plan_log` | `[{"tool": "pick_best", "ok": true, "result": "FARM-01", "ms": 0}, …]` |
 | `node_ms` | `{"intake": 1353, "executor": 2376, "answer": 2534}` |
 | `llm_calls`, `tokens_in`, `tokens_out`, `llm_retries` | `2`, `1939`, `155`, `0` |
 | `tool_calls`, `tools` | `12`, `["eligibility", "documents", "links", …, "search"]` |

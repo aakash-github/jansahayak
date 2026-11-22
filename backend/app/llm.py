@@ -32,8 +32,25 @@ API_KEY = os.getenv("MODEL_API_KEY", "")
 CA_CERT = os.getenv("MODEL_CA_CERT_PATH", "")       # path to vm0X-ca.crt
 MODEL = os.getenv("MODEL_NAME", "Qwen/Qwen3-8B")
 
-MOCK = not (BASE_URL and API_KEY)                   # lets the team run without a key
+MOCK = not (BASE_URL and API_KEY)                   # lets the team run without a key (local dev and unit tests)
 _lock = asyncio.Lock()
+
+
+def require_real_llm(env=os.environ, mock: bool | None = None) -> None:
+    """Model compliance: production must use the IIT KGP Qwen3-8B, never the mock.
+    On Render (which sets RENDER=true) or with REQUIRE_REAL_LLM=1, a missing key or URL stops the server
+    at start-up instead of silently answering with the mock; Render then keeps the previous working version.
+    Also refuses a different model name there, so the approved model cannot be swapped by a config slip."""
+    required = env.get("REQUIRE_REAL_LLM", "1" if env.get("RENDER") else "0") == "1"
+    if not required:
+        return
+    if MOCK if mock is None else mock:
+        raise RuntimeError("REQUIRE_REAL_LLM: MODEL_BASE_URL and MODEL_API_KEY must be set (refusing to run the mock LLM)")
+    if env.get("MODEL_NAME", MODEL) != "Qwen/Qwen3-8B":
+        raise RuntimeError(f"REQUIRE_REAL_LLM: model must be Qwen/Qwen3-8B, got {env.get('MODEL_NAME')!r}")
+
+
+require_real_llm()
 
 
 def _client() -> httpx.AsyncClient:

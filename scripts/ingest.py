@@ -84,19 +84,32 @@ def main():
                                "text": f"{s['scheme_name']} {section}: {text}", "source_url": s["source_url"]})
     for i, c in enumerate(chunks):
         c["id"] = i
-    (DATA / "chunks.json").write_text(json.dumps(chunks, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"{len(chunks)} chunks written")
+    # Embed FIRST, then write chunks.json and embeddings.npy together, so the two files always line up
+    # (row i of embeddings.npy = chunk i). If embedding fails, nothing is written and the old pair is kept.
+    vecs = None
     try:
         import sys
 
         import numpy as np
         sys.path.insert(0, str(DATA.parent))
-        from app import embed  # course embedding API, local model as fallback
+        from app import embed  # IIT KGP embedding API (local model only if EMBED_LOCAL_FALLBACK=1)
         vecs = embed.embed([c["text"] for c in chunks], timeout=60)
-        np.save(DATA / "embeddings.npy", vecs)
         print("embeddings:", vecs.shape, "via", embed.last_source)
+        if embed.last_source != "api":
+            print("WARNING: index NOT built with the IIT KGP embedding API; rebuild with the API before submission")
     except ImportError as e:
-        print("embedding skipped (BM25 only):", e)
+        print("embedding skipped (keyword search only):", e)
+    except RuntimeError as e:  # embed.EmbeddingUnavailable: API missing/down and local fallback off
+        print("embedding FAILED, nothing written (old chunks.json + embeddings.npy kept):", e)
+        print("Set EMBED_BASE_URL / EMBED_API_KEY / EMBED_CA_CERT_PATH in backend/.env and run again.")
+        return
+    (DATA / "chunks.json").write_text(json.dumps(chunks, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"{len(chunks)} chunks written")
+    if vecs is not None:
+        np.save(DATA / "embeddings.npy", vecs)
+    elif (DATA / "embeddings.npy").exists():
+        (DATA / "embeddings.npy").unlink()  # stale: it described the old chunks
+        print("old embeddings.npy removed (it no longer matched the chunks)")
 
 
 if __name__ == "__main__":

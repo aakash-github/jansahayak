@@ -20,6 +20,8 @@ Also measured separately: retrieval recall@4 and @10 (search alone, on the raw q
 Run from the repo root (takes ~10 minutes with the real model):
     backend/.venv/Scripts/python eval/run_eval.py              # all queries
     backend/.venv/Scripts/python eval/run_eval.py F- S-01      # only IDs starting with these
+It refuses to run unless the approved models are configured (Qwen3-8B + IIT KGP embedding API, local
+embedding fallback off); --allow-noncompliant forces a dry run, clearly labelled in the results.
 Writes eval/results/latest.csv (one row per query) and eval/results/latest.md (summary).
 """
 import csv
@@ -34,8 +36,8 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT.parent / "backend"))
 from fastapi.testclient import TestClient  # noqa: E402
 
-from app import eligibility, retrieval  # noqa: E402
-from app.main import app  # noqa: E402
+from app import eligibility, embed, llm, retrieval  # noqa: E402
+from app.main import app, models  # noqa: E402
 
 GUARANTEE = [re.compile(r"\byou are eligible\b", re.I), re.compile(r"(?<!अ)पात्र\s*(हैं|है)")]
 
@@ -114,6 +116,9 @@ def check(row: dict, out: dict, recall: bool = True) -> dict:
         "llm_retries": sum(t.get("llm_retries", 0) for t in out["traces"]),
         "critic_retries": sum(t.get("critic_retries", 0) for t in out["traces"]),
         "path": " > ".join(tr.get("path", [])),
+        "plan": " > ".join(p.split(":")[0] for p in tr.get("plan", [])),  # tools the planner chose
+        # which embedding source served this query's searches (api = IIT KGP VM02; none = no search needed)
+        "embed": ";".join(sorted({t.get("embed_source", "none") for t in out["traces"]})),
         "answer": answer.replace("\n", " ")[:400],
     }
 
@@ -123,13 +128,40 @@ def pct(xs) -> str:
     return f"{100 * sum(xs) / len(xs):.0f}%" if xs else "-"
 
 
-def summary(rows: list[dict]) -> str:
+def compliance_problems() -> list[str]:
+    """Reasons this run would not be a valid Track B evaluation (approved models only)."""
+    problems = []
+    if llm.MOCK:
+        problems.append("the LLM is in MOCK mode (MODEL_BASE_URL / MODEL_API_KEY not set)")
+    if llm.MODEL != "Qwen/Qwen3-8B":
+        problems.append(f"MODEL_NAME is {llm.MODEL!r}, not Qwen/Qwen3-8B")
+    if not (embed.BASE_URL and embed.API_KEY):
+        problems.append("the IIT KGP embedding API is not configured (EMBED_BASE_URL / EMBED_API_KEY)")
+    if embed.LOCAL_FALLBACK:
+        problems.append("EMBED_LOCAL_FALLBACK=1 would allow the local embedding model; set it to 0")
+    return problems
+
+
+def models_section(rows: list[dict], m: dict) -> list[str]:
+    e, s = m["embeddings"], m["search"]
+    by_src = Counter(src for r in rows for src in r["embed"].split(";"))
+    return ["", "## Models used (compliance)", "", "| Item | Value |", "|---|---|",
+            f"| LLM | `{m['llm']['model']}` at `{m['llm']['endpoint']}` (mock: {m['llm']['mock']}) |",
+            f"| Embeddings | `{e['model']}` at `{e['endpoint']}`, local fallback: {'ON' if e['local_fallback'] else 'off'} |",
+            f"| Embedding calls in this run | API {e['calls']['api']} · local {e['calls']['local']} · failed {e['calls']['failed']} |",
+            f"| Queries by embedding source | " + " · ".join(f"{k} {v}" for k, v in sorted(by_src.items())) + " |",
+            f"| Dense index | {s['dense_index']} |",
+            f"| Reranker (not an IIT KGP model) | {s['reranker']} |"]
+
+
+def summary(rows: list[dict], m: dict | None = None) -> str:
     n = len(rows)
     ms = sorted(r["ms"] for r in rows)
     p95 = ms[min(n - 1, int(0.95 * n))]
     fails = Counter(r["failure"] for r in rows if r["failure"])
     L = [f"# Evaluation results ({time.strftime('%Y-%m-%d %H:%M')})", "",
-         f"{n} queries from `eval/eval_set.csv`, real Qwen3-8B model.", "",
+         f"{n} queries from `eval/eval_set.csv`, " + ("**MOCK LLM, not a valid evaluation**." if llm.MOCK
+                                                      else "real Qwen3-8B model."), "",
          "## Headline", "", "| Metric | Value |", "|---|---|",
          f"| **End-to-end accuracy** (all checks pass) | **{pct([r['pass'] for r in rows])}** ({sum(r['pass'] for r in rows)}/{n}) |",
          f"| Task completion (got a reply, no crash) | {pct([r['completed'] for r in rows])} |",
@@ -166,11 +198,21 @@ def summary(rows: list[dict]) -> str:
             f"no fact: {r['facts_missing']}" if r["facts_missing"] else "",
             f"unsafe: {r['unsafe']}" if r["unsafe"] else ""] if x)
         L.append(f"| {r['query_id']} | {r['failure']} | {r['expected_mode']} → {r['mode']} | {prob.replace('|', '/')} |")
+    if m:
+        L += models_section(rows, m)
     return "\n".join(L) + "\n"
 
 
 def main():
-    only = sys.argv[1:]
+    if hasattr(sys.stdout, "reconfigure"):  # Windows consoles default to cp1252; results contain → and Hindi
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    args = sys.argv[1:]
+    if problems := compliance_problems():
+        if "--allow-noncompliant" not in args:
+            sys.exit("Refusing to run: this would not be a valid evaluation with the approved models:\n  - "
+                     + "\n  - ".join(problems) + "\n(Pass --allow-noncompliant for a dry run; results are labelled.)")
+        print("WARNING: non-compliant dry run:", "; ".join(problems))
+    only = [a for a in args if not a.startswith("--")]
     rows = [r for r in csv.DictReader(open(ROOT / "eval_set.csv", encoding="utf-8"))
             if not only or any(r["query_id"].startswith(o) for o in only)]
     client, results = TestClient(app), []
@@ -185,7 +227,7 @@ def main():
         w = csv.DictWriter(f, fieldnames=list(results[0]))
         w.writeheader()
         w.writerows(results)
-    md = summary(results)
+    md = summary(results, models())
     (out / "latest.md").write_text(md, encoding="utf-8")
     print("\n" + md)
 
