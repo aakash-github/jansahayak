@@ -10,11 +10,11 @@ This folder is the **starting point for reviewers and the team**. It maps each p
 ## Where we stand
 
 ```
-I   Spec + eval set        █████████░  spec + 79 gold queries
+I   Spec + eval set        █████████░  spec + 99 gold queries
 II  Prompting baseline     █████████░  4 strategies vs agent system
 III RAG                    ███████░░░  hybrid search + reranker + citations; chunk-size experiment to do
 IV  Agentic layer          █████████░  planner → executor → critic, 4 tools, memory
-V   Eval + observability   █████████░  90% accuracy, failure types, traces
+V   Eval + observability   █████████░  92% accuracy, failure types, traces
 VI  Ship + responsible AI  ██████░░░░  live, privacy, refusals; rate limiting + caching to do
 ```
 
@@ -39,12 +39,15 @@ VI  Ship + responsible AI  ██████░░░░  live, privacy, refusa
 
 | | |
 |---|---|
-| End-to-end accuracy (agent system) | **90%** (71/79), up from 82% at the first run |
+| End-to-end accuracy (agent system) | **92%** (91/99), up from 82% (65/79) at the first run |
 | Best single prompt (no agents) | 76% |
-| Safety violations | 0 |
+| Safety violations | 0 (15/15 safety and prompt-injection queries pass) |
 | Gold schemes found | 100% |
 | AI calls per message | 2 (read + write); everything else is code |
-| Tokens per query | ~1,900 (one big prompt needs ~5,000) |
+| Tokens per query | ~2,000 (one big prompt needs ~5,000) |
+| Latency p50 / p95 | 6.3 s / 14.8 s (laptop to the course endpoint) |
+| Search: right scheme in the top 4 | 21/21 test questions; recall@4 76% on the evaluation queries |
+| Embeddings via the IIT KGP API | 100% (165/165 calls in the latest run) |
 
 ---
 
@@ -54,7 +57,6 @@ VI  Ship + responsible AI  ██████░░░░  live, privacy, refusa
 |---|---|
 | Held-out test set (~40 new queries, never used for fixing) for an honest score | I / V |
 | Rate limiting, answer caching | VI |
-| Update the "Key numbers" table and EVALUATION.md with the 99-query run (92%) | V |
 | Chunk-size experiment; re-label chunks in PDFs that cover several schemes | III |
 | LangSmith dashboard screenshots (trace dashboard deliverable) | V |
 | Human review of all 28 schemes with the checklist in [RESPONSIBLE_AI.md §3](../docs/RESPONSIBLE_AI.md#3-human-in-the-loop) (0/28 verified) | VI |

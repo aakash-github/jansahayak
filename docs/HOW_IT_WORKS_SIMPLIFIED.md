@@ -211,4 +211,4 @@ Memory is held on the server only, never in a database. It is cleared on **Reset
 | ⑥ Critic | ⚙️ code | Catches the AI's mistakes |
 | ⑦ Follow-up | ⚙️ code | Picks the most useful question by counting |
 
-This split is why the full system passes **90%** of our test questions, while one big prompt doing everything passes 65–76%. See [Evaluation](EVALUATION.md#7-prompting-baseline-one-prompt-vs-the-agent-system).
+This split is why the full system passes **90%** of the 79 original test questions (92% of all 99 now), while one big prompt doing everything passes 65–76% of the same 79. See [Evaluation](EVALUATION.md#7-prompting-baseline-one-prompt-vs-the-agent-system).

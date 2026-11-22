@@ -189,7 +189,7 @@ Run it with `backend/.venv/Scripts/python eval/retrieval_eval.py`.
 | **Weak section labels.** 90% of chunks are "general" (guessed from the first 200 characters) | Labels can't be used for filtering yet | Use the PDF's own headings |
 | **Headers and footers** ("Page 6 of 11", URLs) are kept | Small noise | Strip repeated lines per PDF |
 | **English-only model** | Hindi questions are matched through the scheme names and the AI | A multilingual model, if the course offers one |
-| **Short summaries only** for KCC, PMEGP and CGTMSE | Less detail for those schemes | Download the full guidelines by hand |
+| **KCC still has only short notes and FAQs** (PMEGP and CGTMSE full guidelines added 2026-11-22) | Less detail for KCC | Find a full KCC master circular that can be downloaded |
 
 None of these can make someone wrongly "eligible": eligibility comes only from the rules in `schemes.json`.
 

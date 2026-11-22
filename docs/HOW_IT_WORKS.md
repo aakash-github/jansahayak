@@ -274,11 +274,11 @@ Time: about **6 seconds**. The first message after the server has been idle 15+ 
 |---|---|
 | The 28 schemes in `schemes.json` were drafted from the PDFs but are **not yet verified by a person** (`needs_review`) | Data team checks each against official guidelines |
 | 15 PDFs are scans (`need_ocr`) and 2 are Hindi/Marathi, so they are not searchable yet | Run OCR, or find text versions |
-| KCC, PMEGP and CGTMSE only have short official summaries (full guidelines are on sites that block scripts) | Download the full PDFs by hand into `data/raw/` |
+| KCC still has only short official notes and FAQs (PMEGP and CGTMSE full guidelines were added on 2026-11-22) | Find a full KCC master circular that can be downloaded |
 | Plans are built by rules in code, not by the AI | Deliberate (one AI request at a time, small model). The plan format allows an AI planner later |
 | The AI sees the profile, not the full chat history | Fine for scheme finding; add history if needed |
 | Hindi + English only (screen labels are English; chat replies follow the user's language) | Add more Indian languages |
-| End-to-end eval: 82% of 79 queries pass; most failures are the user group not being recognised and find answers ignoring the topic asked about (see [latest results](../eval/results/latest.md)) | Fix those, re-run `eval/run_eval.py` ([guide](EVALUATION.md)) |
+| End-to-end eval: 92% of 99 queries pass; the 8 failures are answers leaving out a fact they were given (5) and school students shown college schemes (3) (see [latest results](../eval/results/latest.md)) | Tighter answer prompt; ask or infer the study level; re-run `eval/run_eval.py` ([guide](EVALUATION.md)) |
 
 ---
 
