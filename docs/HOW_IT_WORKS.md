@@ -61,12 +61,10 @@ flowchart TD
   M["User message"] --> I["1️⃣ Intake agent 🧠<br/>understand the user"]
   I -->|"not about schemes"| R["Polite refusal"]
   I -->|"don't know farmer / student / business yet"| Q["2️⃣ Ask that one question<br/>(with buttons)"]
-  I -->|"asks about one scheme"| F["Scheme tools:<br/>that scheme + its PDFs only"]
   I -->|"'How do I apply?' with many cards"| WH["Which scheme?<br/>(buttons)"]
-  I -->|"otherwise: always answer"| P["3️⃣ Planner"]
-  P --> E["4️⃣ Executor: runs 4 tools"]
+  I -->|"find / one scheme / find + best one"| P["3️⃣ Planner<br/>writes the plan"]
+  P --> E["4️⃣ Executor<br/>runs the plan step by step"]
   E --> W["5️⃣ Answer agent 🧠<br/>write the reply"]
-  F --> W
   W --> C{"6️⃣ Critic<br/>is the reply safe?"}
   C -->|"problem found"| W
   C -->|"OK"| S["7️⃣ Suggest: pick at most ONE<br/>follow-up question + buttons"]
@@ -79,8 +77,8 @@ flowchart TD
 |---|---|---|---|
 | 1 | **Intake** | ✅ | Reads the message and fills a profile, e.g. `{occupation: farmer, state: Bihar, land_acres: 1}` |
 | 2 | **Ask** | ❌ | Only if we don't know whether the user is a farmer, student or business owner. This is the **only** question that holds back results. |
-| 3 | **Planner** | ❌ | Decides the order of tools. Today this is a fixed plan (always the same 4 tools). |
-| 4 | **Executor** | ❌ | Runs the 4 tools (below) |
+| 3 | **Planner** | ❌ | Writes the plan for this turn: which tools, in what order, with what inputs, and why (see "Planner" below) |
+| 4 | **Executor** | ❌ | Runs the plan step by step, passes results between steps, logs each step, and handles failures |
 | 5 | **Answer** | ✅ | Find: 2–4 sentences naming at most 2 schemes (the cards carry the details). About one scheme: only what was asked (numbered steps, a document list, or a short explanation). Citations `[S1]`; only cited sources are shown. |
 | 6 | **Critic** | ❌ | Checks the reply. If it is wrong, sends it back to step 5 (max 10 steps in total). |
 | 7 | **Suggest** | ❌ | After a "find" answer only. If some schemes say "Need more info", picks the **one** detail that would settle the most of them and shows it as a question with tap buttons, naming the schemes it helps ("Helps check: PM-KMY, KCC"). If nothing would change, asks nothing. |
@@ -93,6 +91,22 @@ flowchart TD
 | 📚 Document search | Finds the best supporting text from the guidelines | `backend/app/retrieval.py` |
 | 📄 Document checklist | Lists documents to keep ready | `eligibility.py` |
 | 🔗 Official link | Gives the official site to apply/confirm | `eligibility.py` |
+| 🏆 Pick best | Chooses the top card the rules do not rule out (only for "…the best one" requests) | `agents.py` |
+
+**Planner: how the plan is chosen**
+
+The planner is code, not AI: the key allows one AI request at a time, and the 8B model is unreliable at structured decisions ([EVALUATION.md §7](EVALUATION.md#7-prompting-baseline-one-prompt-vs-the-agent-system)). Each step has a tool, its inputs and a reason. `$top_5`, `$best` and `$focus` mean "what an earlier step found", which is what lets one message need several dependent steps.
+
+| Situation | Plan |
+|---|---|
+| Find: "Farmer in UP, 2 acres" | eligibility (all farmer schemes in UP, topic asked first) → documents (`$top_5`) → links (`$top_5`) → search (`$top_5`) |
+| One scheme: "Documents for PM-KISAN?" | eligibility (PM-KISAN) → documents → links → search (PM-KISAN's PDFs, steered to document lists) |
+| Two steps: "Find my schemes and the documents for the best one" | eligibility → documents → links → **pick_best** → search (`$best` only, steered by the question) |
+| No scheme matches | Later steps are logged as "skipped: no schemes"; the answer says to try myscheme.gov.in or a CSC |
+
+**Executor safety:** only known tools run; a plan has at most 8 steps; a failed optional step (documents, links, search) is logged and the plan continues with safe defaults; a failed eligibility step stops the plan and the user sees "please try again".
+
+**In every trace:** `plan` (e.g. `"pick_best: user asked about the best scheme…"`) and `plan_log` (what each step returned, ok/failed/skipped, time in ms). The eval CSV has a `plan` column.
 
 **"Answer first, then improve" (how follow-up questions work):**
 
@@ -161,7 +175,7 @@ flowchart LR
 2. **Extract text:** read each PDF page and remember the page number (for citations like "p. 4").
 3. **Chunking:** cut the text into pieces of about **300 words**. Each piece repeats the last **50 words** of the previous one, so a sentence cut at the edge isn't lost. Pieces longer than the embedding model's limit (512 tokens, which happens with badly extracted text) are halved until they fit. Blank or scanned pages are skipped.
 4. **Labelling:** each chunk gets a section tag (eligibility / benefit / documents / how to apply / exclusion / FAQ / general), guessed from words near its start, plus the scheme ID, page and source link.
-5. **Embedding:** the model `bge-small-en-v1.5` turns each chunk into a list of 384 numbers that describe its *meaning*. Chunks with similar meaning get similar numbers. We call the **course embedding API** (IIT KGP VM02, 16 chunks per request); if it is down, the same model can run locally and gives identical numbers (on Render this is switched off to save memory, so search falls back to keywords). Today: 33 PDFs → 1,884 chunks, built in about 2.5 minutes.
+5. **Embedding:** the model `bge-small-en-v1.5` turns each chunk into a list of 384 numbers that describe its *meaning*. Chunks with similar meaning get similar numbers. We call the **course embedding API** (IIT KGP VM02, 16 chunks per request); if it is down, search falls back to keywords (a local copy of the model is only an opt-in for offline laptop work, see [MODEL_COMPLIANCE.md](MODEL_COMPLIANCE.md)). Today: 67 PDFs → 2,425 chunks.
 
 > If a scheme has no PDF, ingest makes 3 starter chunks (benefit, eligibility, documents) from `schemes.json`. Today all 28 schemes have PDFs, so this is not used.
 
@@ -173,7 +187,7 @@ flowchart LR
   Q --> S["🧭 Meaning search<br/>(embeddings)"]
   K --> F["🤝 Merge both lists"]
   S --> F
-  F --> RR["🏅 Re-rank<br/>top 12 → best 4"]
+  F --> RR["🏅 Re-rank<br/>top 12 → best 4<br/>(max 2 per PDF)"]
   RR --> OUT["S1, S2, S3, S4<br/>sent to the AI"]
 ```
 
@@ -181,7 +195,7 @@ flowchart LR
 2. **Keyword search (BM25):** finds chunks containing the same words, e.g. "crop insurance".
 3. **Meaning search:** finds chunks with similar meaning even if the words differ, e.g. "farm loan" ≈ "Kisan Credit Card".
 4. **Merge:** combine both top-20 lists. A chunk that ranks high in both wins. (Method name: Reciprocal Rank Fusion.)
-5. **Re-rank:** a second small model reads the question and each of the top 12 chunks together, scores how well they match, and keeps the **best 4**.
+5. **Re-rank:** a second small model reads the question and each of the top 12 chunks together, scores how well they match, and keeps the **best 4**, with **at most 2 from any one PDF** so one long document cannot crowd out the others (`MAX_CHUNKS_PER_DOC`, default 2; back-filled if fewer PDFs match).
 6. These 4 become sources **S1–S4**. They're given to the AI and shown under the answer.
 
 We use two search methods (called **hybrid search**) because each catches what the other misses.
@@ -260,11 +274,11 @@ Time: about **6 seconds**. The first message after the server has been idle 15+ 
 |---|---|
 | The 28 schemes in `schemes.json` were drafted from the PDFs but are **not yet verified by a person** (`needs_review`) | Data team checks each against official guidelines |
 | 15 PDFs are scans (`need_ocr`) and 2 are Hindi/Marathi, so they are not searchable yet | Run OCR, or find text versions |
-| KCC, PMEGP and CGTMSE only have short official summaries (full guidelines are on sites that block scripts) | Download the full PDFs by hand into `data/raw/` |
-| Planner always uses the same plan | OK for now; could let the AI choose tools later |
+| KCC still has only short official notes and FAQs (PMEGP and CGTMSE full guidelines were added on 2026-11-22) | Find a full KCC master circular that can be downloaded |
+| Plans are built by rules in code, not by the AI | Deliberate (one AI request at a time, small model). The plan format allows an AI planner later |
 | The AI sees the profile, not the full chat history | Fine for scheme finding; add history if needed |
 | Hindi + English only (screen labels are English; chat replies follow the user's language) | Add more Indian languages |
-| End-to-end eval: 82% of 79 queries pass; most failures are the user group not being recognised and find answers ignoring the topic asked about (see [latest results](../eval/results/latest.md)) | Fix those, re-run `eval/run_eval.py` ([guide](EVALUATION.md)) |
+| End-to-end eval: 92% of 99 queries pass; the 8 failures are answers leaving out a fact they were given (5) and school students shown college schemes (3) (see [latest results](../eval/results/latest.md)) | Tighter answer prompt; ask or infer the study level; re-run `eval/run_eval.py` ([guide](EVALUATION.md)) |
 
 ---
 

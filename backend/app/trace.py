@@ -100,6 +100,8 @@ def finish(**extra) -> dict:
         "time": time.strftime("%Y-%m-%d %H:%M:%S"),
         "ms": _ms(t["t0"]),
         "path": [n["name"] for n in t["nodes"]],
+        "plan": t.get("plan", []),            # planner output: "tool: why" per step
+        "plan_log": t.get("plan_log", []),    # executor: what each step returned, ok / failed, ms
         "node_ms": {n["name"]: n["ms"] for n in t["nodes"]},
         "llm_calls": len(t["llm"]),
         "llm_ms": sum(c["ms"] for c in t["llm"]),
@@ -113,6 +115,8 @@ def finish(**extra) -> dict:
         "errors": t["errors"],
         "evidence_ids": t["evidence_ids"],
         "evidence_chunks": t.get("evidence_chunks", []),
+        "embed_source": t.get("embed_source", "none"),  # api | local | failed | off | none (no search this turn)
+        "reranker": t.get("reranker"),                 # True if the MiniLM reranker ran on this request
         **extra,
     }
     RECENT.append(s)

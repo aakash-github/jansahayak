@@ -10,10 +10,14 @@ services:
       - { key: MODEL_API_KEY, sync: false }
       - { key: MODEL_NAME, value: Qwen/Qwen3-8B }
       - { key: MODEL_CA_CERT_PATH, value: /etc/secrets/ca.crt }   # upload cert as Render "Secret File" named ca.crt
+      - { key: REQUIRE_REAL_LLM, value: "1" }  # refuse to start if the LLM key/URL is missing or the model is not Qwen3-8B
       - { key: FRONTEND_ORIGIN, sync: false }
-      # Course embedding API (VM02). Falls back to the local model if missing or down.
+      # Course embedding API (VM02). API only: if it is down, search uses keywords (BM25); no other embedding service.
       - { key: EMBED_BASE_URL, value: "https://103.42.50.41:1035/v1" }
       - { key: EMBED_MODEL, value: bge-small-en-v1.5 }
       - { key: EMBED_API_KEY, sync: false }
       - { key: EMBED_CA_CERT_PATH, value: /etc/secrets/embed-ca.crt }  # upload vm02-ca.crt as Secret File named embed-ca.crt
-      - { key: EMBED_LOCAL_FALLBACK, value: "0" }  # no local model on 512 MB free tier; keyword search if API is down
+      - { key: EMBED_LOCAL_FALLBACK, value: "0" }  # never run the embedding model locally in production
+      # Reranker = small MiniLM cross-encoder on this server, NOT an IIT KGP model (docs/MODEL_COMPLIANCE.md).
+      # Set to "off" if the course team does not allow it.
+      - { key: RERANKER, value: "on" }

@@ -8,7 +8,7 @@ A chatbot that helps Indian citizens (farmers, students, entrepreneurs) find gov
 - [How it works (simplified)](docs/HOW_IT_WORKS_SIMPLIFIED.md): every piece in one page of diagrams, start here
 - [How JanSahayak works](docs/HOW_IT_WORKS.md): the full backend in plain English (chat flow, eligibility rules, follow-up questions)
 - [Document search (RAG) and embeddings](docs/RAG_AND_EMBEDDINGS.md): how PDFs become searchable, how good search is, how to add a PDF
-- [Evaluation and tracing](docs/EVALUATION.md): the 79-query test set, metrics, failure types, request traces, prompting baseline · [latest results](eval/results/latest.md)
+- [Evaluation and tracing](docs/EVALUATION.md): the 99-query test set, metrics, failure types, request traces, prompting baseline · [latest results](eval/results/latest.md)
 
 ## Architecture
 
@@ -21,7 +21,7 @@ flowchart LR
   G --> T2["Document search<br/>chunks.json + embeddings.npy"]
   G -- "chat (2 calls per message)" --> LLM["Course LLM<br/>Qwen3-8B"]
   T2 -- "embed the question" --> EMB["Course embedding API (VM02)<br/>bge-small-en-v1.5"]
-  P["Offline: download_pdfs.py → ingest.py<br/>33 PDFs → 1,884 chunks"] -.-> T2
+  P["Offline: download_pdfs.py → ingest.py<br/>67 PDFs → 2,425 chunks"] -.-> T2
 ```
 
 - **No database.** Scheme rules and the search index are files inside the backend container. Chat sessions live in server memory and are cleared on reset or restart.
@@ -88,7 +88,7 @@ Scheme data is a draft (`needs_review`) until someone checks each scheme against
 cd backend
 .venv/Scripts/python tests/test_followups.py   # follow-up questions: every conversation ends, nothing asked twice
 .venv/Scripts/python ../eval/retrieval_eval.py # document search: right scheme found? (15/15 today)
-.venv/Scripts/python ../eval/run_eval.py       # whole chat on 79 queries with gold answers (~10 min, real AI)
+.venv/Scripts/python ../eval/run_eval.py       # whole chat on 99 queries with gold answers (~15 min, real AI)
 .venv/Scripts/python ../eval/prompt_baseline.py # one prompt, no agents, 4 prompting strategies (~45 min, real AI)
 ```
 

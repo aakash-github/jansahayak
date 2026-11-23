@@ -7,7 +7,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from . import embed, llm, trace
+from urllib.parse import urlparse
+
+from . import embed, llm, privacy, retrieval, trace
 from .agents import DATA_AS_OF, GRAPH
 
 app = FastAPI(title="JanSahayak API")
@@ -47,23 +49,38 @@ def _sources(evidence: list, answer: str) -> list:
     return out if cited else out[:2]
 
 
+def models() -> dict:
+    """Which models and services this server actually uses (model compliance). Never includes keys."""
+    host = lambda url: urlparse(url).netloc or "-"
+    return {
+        "llm": {"model": llm.MODEL, "endpoint": host(llm.BASE_URL), "mock": llm.MOCK, "ca_cert": bool(llm.CA_CERT)},
+        "embeddings": {"model": embed.API_MODEL, "endpoint": host(embed.BASE_URL),
+                       "api_configured": bool(embed.BASE_URL and embed.API_KEY), "ca_cert": bool(embed.CA_CERT),
+                       "local_fallback": embed.LOCAL_FALLBACK, "calls": dict(embed.STATS),
+                       "last_source": embed.last_source},
+        "search": retrieval.status(),
+    }
+
+
 @app.get("/health")
 def health():
-    return {"ok": True, "mock_llm": llm.MOCK, "embed_api": bool(embed.BASE_URL and embed.API_KEY),
-            "last_embed_source": embed.last_source}
+    m = models()
+    return {"ok": True, "mock_llm": llm.MOCK, "embed_api": m["embeddings"]["api_configured"],
+            "last_embed_source": embed.last_source, "models": m}
 
 
 @app.post("/api/chat")
 async def chat(body: ChatIn):
     sid = body.session_id or str(uuid.uuid4())
     sess = SESSIONS.setdefault(sid, _new_session())
-    message = body.message[:1000]
+    # Mask Aadhaar / phone / bank / PAN / e-mail BEFORE anything else sees the message (AI, session, traces).
+    message, pii_found = privacy.redact(body.message[:1000])
     if body.scheme_id and sess["pending"]:  # answer to "Which scheme do you mean?": re-ask the original question
         message = f"{sess['pending']} ({message})"
     sess["pending"] = None
     if body.set:  # remember the button text so the details panel shows "Up to ₹2.5 lakh", not "250000"
         for k, v in body.set.items():
-            sess["labels"][k] = [v, body.message[:60]]
+            sess["labels"][k] = [v, message[:60]]
     trace.start()
     try:
         out = await GRAPH.ainvoke({"message": message, "profile": sess["profile"], "preset": body.set,
@@ -85,9 +102,12 @@ async def chat(body: ChatIn):
     blocking = bool(out.get("blocking"))
     labels = {k: lab for k, (v, lab) in sess["labels"].items() if sess["profile"].get(k) == v}  # drop stale labels
     answer = out.get("answer", "")
+    if pii_found:  # tell the user we removed it (and why), in the chat language
+        answer = f"{privacy.NOTICE.get(sess['lang'], privacy.NOTICE['en'])}\n\n{answer}"
     schemes = [] if blocking else out.get("results", [])
     summary = trace.finish(mode=mode, schemes=[r["scheme_id"] for r in schemes],
-                           followup=(out.get("followup") or {}).get("field"))
+                           followup=(out.get("followup") or {}).get("field"),
+                           pii_masked=pii_found)  # kinds only (e.g. ["aadhaar"]), never the numbers
     return {
         "session_id": sid,
         "message": answer,
@@ -99,7 +119,8 @@ async def chat(body: ChatIn):
         "schemes": schemes,
         "sources": _sources(out.get("evidence", []), answer),
         "data_as_of": DATA_AS_OF,
-        "trace": summary,                  # timings, AI calls, tokens, tools, errors (no message text)
+        "pii_masked": bool(pii_found),     # True = a personal number was removed from the message
+        "trace": summary,                 # timings, AI calls, tokens, tools, errors (no message text)
     }
 
 

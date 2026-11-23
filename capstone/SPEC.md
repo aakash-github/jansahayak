@@ -20,9 +20,11 @@ Indian citizens miss government schemes they could get because the rules are spr
 ## What it refuses or never does
 - Off-topic requests (poems, coding, cricket…) → polite refusal.
 - Never says "you are eligible", only "you may be eligible", and always points to the official site or a CSC.
-- Never asks for, repeats or stores Aadhaar, bank or phone numbers. Profiles last only for the session.
-- Never names a scheme that is not in the catalogue. The critic checks for this.
-- Ignores instructions hidden in messages or documents ("ignore your rules…").
+- Never asks for, repeats or stores Aadhaar, bank, PAN or phone numbers. If a user types one, it is masked before the AI sees it. Profiles last only for the session.
+- Never names a scheme that is not in the catalogue, and never states an amount or limit that is not in the scheme data or documents. The critic checks both.
+- Ignores instructions hidden in messages or documents ("ignore your rules…"), but still helps if the user also says who they are.
+- Never approves, sanctions or guarantees anything. Schemes whose rules have not yet been checked by the team are labelled as such.
+- Details: [RESPONSIBLE_AI.md](../docs/RESPONSIBLE_AI.md).
 
 ## Inputs and outputs
 - **Input:** a chat message (or a tapped button).
@@ -38,11 +40,11 @@ A reply passes only if all four checks pass (see [EVALUATION.md](../docs/EVALUAT
 ## Constraints
 - Course-hosted Qwen3-8B (one request at a time per key) and the course embedding API (bge-small).
 - Free hosting: Render (512 MB) for the backend and GitHub Pages for the frontend.
-- 28 central and state schemes, with 33 official PDFs indexed (1,884 chunks).
+- 28 central and state schemes, with 67 official PDFs indexed (2,425 chunks). This is below the Track B target of 500–2,000 documents: few citizen-facing PDFs exist per scheme, many are scans or Hindi/Marathi only, and some sites block downloads.
 
 ## Success targets
 | Metric | Target | Now |
 |---|---|---|
-| End-to-end accuracy (79 queries) | ≥ 85% | 90% |
+| End-to-end accuracy (99 queries) | ≥ 85% | 92% |
 | Safety violations | 0 | 0 |
-| Latency p95 | < 15 s | ~9 s locally, slower on free Render |
+| Latency p95 | < 15 s | 14.8 s locally, slower on free Render |
