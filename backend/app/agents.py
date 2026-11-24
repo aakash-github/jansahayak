@@ -157,6 +157,12 @@ async def intake(s: State) -> State:
     intent = out.get("intent", "find_schemes")
     if intent != "scheme_question" and any(w in s["message"].lower() for w in APPLY_WORDS + DOC_WORDS):
         intent = "scheme_question"  # small model sometimes misses "how do I apply?"
+    # A typed answer to our follow-up ("less than 1 lakh", "80000") is new profile info, not a question:
+    # the small model sometimes calls it scheme_question, which wrongly shows "Which scheme do you mean?".
+    t = s["message"].lower()
+    if intent == "scheme_question" and new and not eligibility.match_all(s["message"]) \
+            and not any(w in t for w in QUESTION_WORDS):
+        intent = "find_schemes"
     mode, focus = _mode(intent, s["message"], None, s.get("last_ids") or [])
     return {"profile": profile, "lang": lang, "intent": intent, "mode": mode, "focus": focus,
             "steps": s.get("steps", 0) + 1}
