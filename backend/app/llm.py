@@ -31,6 +31,9 @@ BASE_URL = os.getenv("MODEL_BASE_URL", "")          # e.g. https://103.42.50.41:
 API_KEY = os.getenv("MODEL_API_KEY", "")
 CA_CERT = os.getenv("MODEL_CA_CERT_PATH", "")       # path to vm0X-ca.crt
 MODEL = os.getenv("MODEL_NAME", "Qwen/Qwen3-8B")
+# Local Ollama only: "none" turns thinking off (Ollama ignores chat_template_kwargs below).
+# Leave unset for the course API.
+REASONING_EFFORT = os.getenv("MODEL_REASONING_EFFORT", "")
 
 MOCK = not (BASE_URL and API_KEY)                   # lets the team run without a key
 _lock = asyncio.Lock()
@@ -52,6 +55,8 @@ async def chat(messages: list[dict], max_tokens: int = 512, temperature: float =
         # Qwen3 "thinks" by default and burns the token budget; switch it off.
         "chat_template_kwargs": {"enable_thinking": False},
     }
+    if REASONING_EFFORT:
+        body["reasoning_effort"] = REASONING_EFFORT
     async with _lock:  # one request at a time per key
         t0, retries = time.perf_counter(), 0
         for delay in (2, 4, 8, None):
