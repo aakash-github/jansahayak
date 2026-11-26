@@ -133,7 +133,7 @@ LangGraph sends traces to LangSmith automatically once these env vars are set. N
 3. Record the demo set: `backend/.venv/Scripts/python eval/trace_demo.py`. It switches tracing on for that script only, sends 12 made-up conversations (every kind of reply plus safety and injection), and checks they reached LangSmith.
 4. Open smith.langchain.com → Projects → `jansahayak`. Each request is a tree: `jansahayak-chat` → intake → planner → executor → answer (`qwen3-8b` call with prompt, reply and tokens) → critic → suggest.
 
-**Screenshots for the report:** (1) the run list with latency and tokens, (2) one trace opened as a tree, (3) an AI call with its prompt and token counts, (4) the Monitor tab charts.
+**Screenshots:** [capstone/screenshots](../capstone/screenshots/README.md): the overview (14 traces, 0 failed, Qwen3-8B, 4 tools), the trace list, one request's full flow, the executor's tools, an AI call's prompt and reply, the search tool's passages, and a prompt-injection attempt handled safely.
 
 > ⚠️ LangSmith receives **full message text**, so it is an outside service holding user messages. Use it for local testing and eval runs. Only switch it on in production (Render) if the team agrees.
 

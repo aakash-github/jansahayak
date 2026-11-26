@@ -146,7 +146,7 @@ const ITEMS = [
   ['V. Evaluation and observability', [
     ['End-to-end accuracy, completion, tool calls, cost, latency', 'done', '91%, 100% completion, ~8.4 tool calls, ~2,000 tokens, p50 5.5 s / p95 10.7 s', [L('latest.md', 'eval/results/latest.md')]],
     ['Failure taxonomy (retrieval / reasoning / tool / hallucination)', 'done', 'One label per failed query', [L('EVALUATION.md', 'docs/EVALUATION.md')]],
-    ['Tracing via LangSmith / Langfuse / OTel', 'partial', 'Built-in traces on every reply + /api/traces; LangSmith project jansahayak-capstone: 14 demo traces, 25 AI calls, 108 tool calls, tokens', [L('trace.py', 'backend/app/trace.py')]],
+    ['Tracing via LangSmith / Langfuse / OTel', 'done', 'Built-in traces on every reply + /api/traces; LangSmith project jansahayak-capstone: 14 demo traces, 25 AI calls, 108 tool calls, tokens', [L('screenshots', 'capstone/screenshots/README.md'), L('trace.py', 'backend/app/trace.py')]],
   ]],
   ['VI. Ship it', [
     ['React front-end', 'done', 'Voice, Hindi, scheme cards, tap-to-answer buttons; live on GitHub Pages', [L('live app', 'https://aakash-github.github.io/jansahayak/')]],
@@ -159,14 +159,13 @@ const ITEMS = [
   ]],
   ['Deliverables', [
     ['Git repository with the full stack', 'done', 'Entry point: capstone/README.md', [L('capstone/', 'capstone/README.md')]],
-    ['Trace dashboard with real queries', 'partial', 'LangSmith dashboard recorded (eval/trace_demo.py); screenshots for the report still to take', [L('how', 'docs/EVALUATION.md#4-tracing-seeing-inside-each-request')]],
+    ['Trace dashboard with real queries', 'done', 'LangSmith project jansahayak-capstone: 8 screenshots (overview, trace list, full flow, tools, AI call, search, injection)', [L('screenshots', 'capstone/screenshots/README.md')]],
     ['Evaluation report incl. failure taxonomy', 'done', 'Eval guide + result files', [L('EVALUATION.md', 'docs/EVALUATION.md')]],
     ['12-page technical report', 'todo', 'Outline in capstone/README.md', [L('outline', 'capstone/README.md#12-page-report-outline')]],
     ['10-minute live demo', 'todo', 'Script in capstone/README.md', [L('demo script', 'capstone/README.md#10-minute-demo-script')]],
   ]],
 ];
 const LEFT = [
-  ['langsmith', 'LangSmith: create a free key, run 10 queries, take 3 screenshots', 'Traces are already in project jansahayak-capstone. Take 4 screenshots (run list, one trace tree, an AI call, Monitor tab). Free plan, no card.', 'You'],
   ['merge', 'Review and merge the capstone-final pull request', 'Then Render and GitHub Pages redeploy by themselves.', 'Leader'],
   ['report', 'Write the 12-page report', 'Outline + where to copy each section from: capstone/README.md', 'Team'],
   ['demo', 'Rehearse the 10-minute demo and record a backup video', 'Wake Render 5 minutes before (free tier sleeps).', 'Team'],
@@ -208,6 +207,7 @@ document.querySelectorAll('#left input').forEach(cb => cb.addEventListener('chan
 }));
 const DOCS = [
   ['Capstone map', 'Brief → what we built → where', 'capstone/README.md'],
+  ['Trace dashboard', 'LangSmith screenshots with captions', 'capstone/screenshots/README.md'],
   ['How it works (simplified)', 'The whole bot on one page of diagrams', 'docs/HOW_IT_WORKS_SIMPLIFIED.md'],
   ['Evaluation', 'Test set, metrics, failure types, tracing, prompting baseline', 'docs/EVALUATION.md'],
   ['RAG and embeddings', 'How PDFs are searched, chunking, how to add one', 'docs/RAG_AND_EMBEDDINGS.md'],
