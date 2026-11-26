@@ -15,3 +15,4 @@ backend/data/raw/*
 logs/
 eval/results/.chunk_cache/
 capstone/report/report.html
+capstone/demo/_raw/
