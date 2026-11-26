@@ -73,7 +73,7 @@ class Film:
         self.timeline.append((time.time(), c["wav"]))
         self.js("([t,s]) => D.sub(t,s)", [c["text"], c["secs"]])
         if cue:
-            self.cue(cue, data)
+            self.cue(cue, {**(data or {}), "secs": c["secs"]})   # animations stretch or shrink to the clip length
         return time.time() + c["secs"]
 
     def hold(self, deadline, gap=0.45):

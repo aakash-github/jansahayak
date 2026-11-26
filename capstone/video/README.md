@@ -22,7 +22,7 @@ fusion → rerank), answer, critic, follow-up. Then follow-ups and the cache, Hi
    ```
 2. **Choose the voice** in `backend/.env` (never commit this file):
    ```
-   # ElevenLabs. Free plans can only use the Default voices (Voices > Default); library voices need a paid plan.
+   # ElevenLabs. Paid plans can use any Voice Library voice (e.g. an Indian-English narrator); free plans only the Default ones.
    VOICE_PROVIDER=elevenlabs
    ELEVENLABS_API_KEY=your_key
    ELEVENLABS_VOICE_ID=voice_id
@@ -48,6 +48,10 @@ fusion → rerank), answer, critic, follow-up. Then follow-ups and the cache, Hi
    backend/.venv/Scripts/python capstone/video/make_video.py     # → capstone/video/JanSahayak_explainer.mp4
    ```
    If only the final encoding step fails, `make_video.py --encode-only` redoes it from the saved frames.
+
+**Any voice fits.** Each scene waits for its own clip, subtitles follow the real clip length, and the fixed
+animations (title, PDF pile, chunk page, lessons, results chart, closing) stretch or shrink to the clip they play
+under. A faster or slower voice only changes the total length (about 10–11 min at a normal pace).
 
 Live replies, timings and the reranking order differ a little from run to run. The X-ray always shows the
 numbers of the request it is replaying. `<break time="0.6s" />` in `narration.py` marks a pause.

@@ -15,6 +15,8 @@ function countUp(node, to, ms = 1200, fmt = v => Math.round(v)) {
 const secs = ms => ms >= 1000 ? (ms / 1000).toFixed(2) + ' s' : Math.round(ms) + ' ms';
 
 const D = window.D = {};
+// timing scale: a cue written for a clip of `base` seconds runs faster or slower to match the real clip
+const fit = (d, base) => Math.min(1.4, Math.max(0.4, (d.secs || base) / base));
 const CUES = {};
 D.cue = (name, data) => { CUES[name](data || {}); return true; };   // never return the promise (keeps Python unblocked)
 
@@ -60,10 +62,11 @@ CUES.open2 = async () => {
     await sleep(60); h.style.top = y + 'px'; h.style.opacity = 1; await sleep(650);
   }
 };
-CUES.open3 = async ({ titles = [] }) => {
+CUES.open3 = async (d) => {
+  const titles = d.titles || [], k = fit(d, 8.5);
   const pile = $('#o-pile'); pile.style.left = '1340px'; pile.innerHTML = '';
   $$('.help').forEach((h, i) => { h.style.left = '1190px'; h.style.top = '420px'; h.style.transform = `rotate(${(i - 1.5) * 6}deg) scale(.7)`; h.style.opacity = 0; });
-  await sleep(500);
+  await sleep(500 * k);
   const names = titles.length ? titles : ['Operational Guidelines'];
   for (let i = 0; i < 26; i++) {
     const sh = el('div', 'sheet', `<span class="pdf">PDF</span>${esc(names[i % names.length])}`);
@@ -71,31 +74,33 @@ CUES.open3 = async ({ titles = [] }) => {
     const rot = (Math.random() - .5) * 26, dx = (Math.random() - .5) * 120, dy = (Math.random() - .5) * 50 - i * 2;
     sh.style.transform = `translate(${dx}px, ${dy - 200}px) rotate(${rot}deg)`;
     requestAnimationFrame(() => { sh.style.opacity = 1; sh.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`; });
-    await sleep(110);
+    await sleep(110 * k);
   }
-  await sleep(600); fxIn('o-counter');
+  await sleep(600 * k); fxIn('o-counter');
 };
 CUES.open4 = () => fxIn('o-question');
-CUES.reprise = async () => {   // closing callback to Ramesh
+CUES.reprise = async (d) => {   // closing callback to Ramesh
+  const kk = fit(d, 14.5);
   D.chapter('', '');
   $('#o-question').classList.remove('in'); $('#o-pile').innerHTML = ''; $('#o-helps').innerHTML = '';
   $('#o-field').classList.add('drawn', 'green'); fxIn('o-sun', 'o-kick', 'o-name', 'o-facts', 'o-counter');
   const k = $('#o-k'); k.textContent = '0'; k.className = 'n green';
   $('#o-counter .box:nth-child(2) .l').textContent = 'he now knows about';
-  await sleep(2600); countUp(k, 5, 1400);
-  await sleep(1600);
+  await sleep(2600 * kk); countUp(k, 5, 1400 * kk);
+  await sleep(1600 * kk);
   const box = $('#o-helps');
   for (const [t, d, x, y] of HELPS) {
     const h = el('div', 'help', `<div class="t">${t}</div><div class="d">${d}</div>`);
     h.style.left = x + 'px'; h.style.top = (y + 40) + 'px'; h.style.opacity = 0; box.appendChild(h);
-    await sleep(60); h.style.top = y + 'px'; h.style.opacity = 1; await sleep(500);
+    await sleep(60); h.style.top = y + 'px'; h.style.opacity = 1; await sleep(500 * kk);
   }
 };
 
 // ---------------------------------------------------------------- 2. title
-CUES.title1 = async () => {
-  D.chapter('', ''); fxIn('t-logo'); await sleep(500); fxIn('t-name'); await sleep(700); fxIn('t-lead');
-  await sleep(1800); fxIn('t-p1'); await sleep(1100); fxIn('t-p2'); await sleep(1100); fxIn('t-p3');
+CUES.title1 = async (d) => {
+  const k = fit(d, 11.6);
+  D.chapter('', ''); fxIn('t-logo'); await sleep(500 * k); fxIn('t-name'); await sleep(700 * k); fxIn('t-lead');
+  await sleep(1800 * k); fxIn('t-p1'); await sleep(1100 * k); fxIn('t-p2'); await sleep(1100 * k); fxIn('t-p3');
 };
 
 // ---------------------------------------------------------------- 3. X-ray
@@ -383,7 +388,8 @@ CUES.docs1 = async () => {
   await stagger(tiles, 28);
 };
 CUES.docs1b = () => stagger(['bn1', 'bn2', 'bn3'].map(i => $('#' + i)), 600);
-CUES.docs2 = async ({ chunk }) => {
+CUES.docs2 = async (d) => {
+  const chunk = d.chunk, k = fit(d, 12.9);
   panel('docs', 'docs-b');
   $('#docs-h').textContent = 'Every chunk remembers where it came from';
   $('#page-h').textContent = chunk.title + ' · page ' + chunk.page;
@@ -397,10 +403,10 @@ CUES.docs2 = async ({ chunk }) => {
   for (const [y, lab] of [[200, 'chunk · 300 words'], [400, 'next chunk · 50-word overlap']]) {
     const ov = el('div', 'overlap'); ov.style.top = (y - 34) + 'px'; ov.style.height = '34px'; page.appendChild(ov);
     const b = el('div', 'band', `<span class="bl">${lab}</span>`); b.style.top = y + 'px'; page.appendChild(b);
-    await sleep(80); b.classList.add('in'); ov.classList.add('in'); await sleep(900);
+    await sleep(80); b.classList.add('in'); ov.classList.add('in'); await sleep(900 * k);
   }
-  await stagger([...meta.querySelectorAll('.metarow')], 500);
-  await sleep(800); meta.querySelector('.cite-demo').classList.add('in');
+  await stagger([...meta.querySelectorAll('.metarow')], 500 * k);
+  await sleep(800 * k); meta.querySelector('.cite-demo').classList.add('in');
 };
 CUES.docs3 = async () => {
   panel('docs', 'docs-c'); $('#docs-h').textContent = 'How big should a chunk be?';
@@ -434,10 +440,10 @@ const FAILS = [
   ['🎲 Guessing instead of asking', '“I need some financial help” → random schemes, instead of “farmer, student or business?”'],
   ['🧠 Chain-of-thought: worst (65%)', 'The reasoning used up the output budget. Facts were skipped, or the model over-asked.'],
 ];
-CUES.model2 = async () => {
+CUES.model2 = async (d) => {
   panel('model', 'model-b'); $('#model-h').textContent = 'How an 8B model breaks';
   $('#fails').innerHTML = FAILS.map(([t, d]) => `<div class="fail"><div class="t">${t}</div><div class="d">${d}</div></div>`).join('');
-  await sleep(4200); $$('#fails .fail')[0].classList.add('in');
+  await sleep(4200 * fit(d, 12.8)); $$('#fails .fail')[0].classList.add('in');
 };
 CUES.model3 = async ({ secs: s = 14 }) => {
   const f = $$('#fails .fail'); const gap = s * 1000 / 3.3;
@@ -450,13 +456,15 @@ CUES.model4 = async () => {
   await sleep(500);
   for (const f of $$('#schema .hfill')) { f.style.width = ((f.dataset.v - 60) / 40 * 100) + '%'; await sleep(1100); }
 };
-CUES.model5 = async () => {
+CUES.model5 = async (d) => {
+  const k = fit(d, 16.3);
   panel('model', 'model-d'); $('#model-h').textContent = 'Our design principle';
-  await sleep(4500); $('#side-code').classList.add('in'); await sleep(1500); $('#side-ai').classList.add('in');
+  await sleep(4500 * k); $('#side-code').classList.add('in'); await sleep(1500 * k); $('#side-ai').classList.add('in');
 };
 
 // ---------------------------------------------------------------- 6. lesson: evaluation
-CUES.eval1 = async () => {
+CUES.eval1 = async (d) => {
+  const k = fit(d, 18.3);
   D.chapter('', ''); panel('eval', 'eval-a');
   countUp($('#e79'), 79, 1800);
   $('#emix').innerHTML = [['41', 'find'], ['18', 'focus'], ['6', 'multi-turn'], ['4', 'ask'], ['5', 'refuse'], ['5', 'safety'], ['7', 'in Hindi']]
@@ -466,7 +474,7 @@ CUES.eval1 = async () => {
     ['M-01', 'Farmer in UP, 2 acres ‖ How do I apply?', 'which'], ['A-01', 'I need some financial help from the government', 'ask'],
     ['X-02', 'Here is my Aadhaar 1234 5678 9012, check my PM-KISAN…', 'focus · safety']];
   $('#qcards').innerHTML = Q.map(([i, q, e]) => `<div class="qcard"><span class="id">${i}</span><span>${esc(q)}</span><span class="ex">${e}</span></div>`).join('');
-  await sleep(2500); await stagger($$('#qcards .qcard'), 900);
+  await sleep(2500 * k); await stagger($$('#qcards .qcard'), 900 * k);
 };
 CUES.eval2 = async () => {
   panel('eval', 'eval-b');
@@ -477,7 +485,8 @@ CUES.eval2 = async () => {
   ['tool_error', 'hallucination', 'reasoning_error', 'retrieval_miss'].forEach((l, i) => { if (i) fl.appendChild(el('span', 'arr', '→')); fl.appendChild(el('span', 'chip k bad', l)); });
   await stagger($$('#checks4 .c4'), 1500);
 };
-CUES.eval3 = async () => {
+CUES.eval3 = async (d) => {
+  const k = fit(d, 17.3);
   panel('eval', 'eval-c');
   const svg = $('#runs'), W = 1680, H = 600, x0 = 120, x1 = 1560, y = v => 520 - (v - 60) / 40 * 460;
   const pts = [['First full test', 82], ['After fixing what failed', 90], ['Final system', 91]];
@@ -485,8 +494,8 @@ CUES.eval3 = async () => {
   let g = `<line x1="${x0 - 40}" x2="${x1 + 40}" y1="${y(76)}" y2="${y(76)}" stroke="#ffc44d" stroke-width="3" stroke-dasharray="10 10" opacity=".8"/>
     <text x="${x1 + 40}" y="${y(76) + 36}" text-anchor="end" fill="#ffc44d" font-size="24" font-weight="700">one big prompt, no agents · 76%</text>`;
   for (const v of [60, 70, 80, 90, 100]) g += `<line x1="${x0 - 40}" x2="${x1 + 40}" y1="${y(v)}" y2="${y(v)}" stroke="#253152"/><text x="${x0 - 60}" y="${y(v) + 8}" text-anchor="end" fill="#5d6a8a" font-size="20">${v}%</text>`;
-  const d = pts.map((p, i) => `${i ? 'L' : 'M'}${px(i)} ${y(p[1])}`).join(' ');
-  g += `<path id="runline" d="${d}" fill="none" stroke="#ff8a3d" stroke-width="6" stroke-linecap="round" stroke-dasharray="2000" stroke-dashoffset="2000" style="transition:stroke-dashoffset 5s ease"/>`;
+  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${px(i)} ${y(p[1])}`).join(' ');
+  g += `<path id="runline" d="${line}" fill="none" stroke="#ff8a3d" stroke-width="6" stroke-linecap="round" stroke-dasharray="2000" stroke-dashoffset="2000" style="transition:stroke-dashoffset 5s ease"/>`;
   g += `<path id="rej" d="M${px(1)} ${y(90)} L${(px(1) + px(2)) / 2} ${y(85)}" stroke="#ff6b7a" stroke-width="4" stroke-dasharray="10 8" fill="none" opacity="0" style="transition:opacity .6s"/>
     <g id="rejp" opacity="0" style="transition:opacity .6s"><circle cx="${(px(1) + px(2)) / 2}" cy="${y(85)}" r="13" fill="#ff6b7a"/>
     <text x="${(px(1) + px(2)) / 2}" y="${y(85) + 50}" text-anchor="middle" fill="#ff6b7a" font-size="24" font-weight="700">stricter format · 85% · made it worse, undone</text></g>`;
@@ -496,10 +505,10 @@ CUES.eval3 = async () => {
   svg.innerHTML = g;
   await sleep(300);
   const P = svg.querySelectorAll('.pt');
-  P[0].setAttribute('opacity', 1); await sleep(4300);
-  svg.querySelector('#runline').style.strokeDashoffset = 1000; P[1].setAttribute('opacity', 1); await sleep(2600);
-  svg.querySelector('#rej').setAttribute('opacity', 1); svg.querySelector('#rejp').setAttribute('opacity', 1); await sleep(3000);
-  svg.querySelector('#runline').style.strokeDashoffset = 0; await sleep(1500); P[2].setAttribute('opacity', 1);
+  P[0].setAttribute('opacity', 1); await sleep(4300 * k);
+  svg.querySelector('#runline').style.strokeDashoffset = 1000; P[1].setAttribute('opacity', 1); await sleep(2600 * k);
+  svg.querySelector('#rej').setAttribute('opacity', 1); svg.querySelector('#rejp').setAttribute('opacity', 1); await sleep(3000 * k);
+  svg.querySelector('#runline').style.strokeDashoffset = 0; await sleep(1500 * k); P[2].setAttribute('opacity', 1);
 };
 CUES.eval4 = async () => {
   panel('eval', 'eval-d');
