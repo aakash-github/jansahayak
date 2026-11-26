@@ -174,8 +174,9 @@ export default function App() {
       setMsgs((m) => [...m, bot])
       if (voice) readAloud(botIndex, spoken(bot)) // asked by voice -> answer by voice
       if (r.followup?.input && !r.followup.options.length) setTimeout(() => inputRef.current?.focus(), 50)
-    } catch {
-      setMsgs((m) => [...m, { role: 'bot', text: 'I could not reach the server. It may be waking up, so please try again in a minute.' }])
+    } catch (e) {
+      const text = e?.userMessage ? e.message : 'I could not reach the server. It may be waking up, so please try again in a minute.'
+      setMsgs((m) => [...m, { role: 'bot', text }])
     } finally { clearTimeout(timer); setBusy(false) }
   }
   async function reset() { stopSpeaking(); setSpeaking(null); await resetSession(sid); setSid(null); setMsgs([]); setProfile({}); setLabels({}) }

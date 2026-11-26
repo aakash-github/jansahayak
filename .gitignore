@@ -13,3 +13,4 @@ backend/data/raw/*
 /*.jpg
 /*.xlsx
 logs/
+eval/results/.chunk_cache/

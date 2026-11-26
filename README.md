@@ -2,13 +2,14 @@
 
 A chatbot that helps Indian citizens (farmers, students, entrepreneurs) find government schemes, check the stated eligibility rules, and see the documents and official links they need. Works in English and Hindi, typed or spoken. IIT KGP Capstone, Track B.
 
-🎓 **Capstone submission:** [capstone/](capstone/README.md) maps every part of the Track B brief to what we built.
+🎓 **Capstone submission:** [capstone/](capstone/README.md) maps every part of the Track B brief to what we built · [tracker page](capstone/tracker.html)
 
 📖 **Docs**
 - [How it works (simplified)](docs/HOW_IT_WORKS_SIMPLIFIED.md): every piece in one page of diagrams, start here
 - [How JanSahayak works](docs/HOW_IT_WORKS.md): the full backend in plain English (chat flow, eligibility rules, follow-up questions)
 - [Document search (RAG) and embeddings](docs/RAG_AND_EMBEDDINGS.md): how PDFs become searchable, how good search is, how to add a PDF
 - [Evaluation and tracing](docs/EVALUATION.md): the 79-query test set, metrics, failure types, request traces, prompting baseline · [latest results](eval/results/latest.md)
+- [Responsible AI, safety and serving](docs/RESPONSIBLE_AI.md): prompt-injection tests, personal data, refusals, human-in-the-loop, rate limiting, caching
 
 ## Architecture
 
@@ -87,13 +88,16 @@ Scheme data is a draft (`needs_review`) until someone checks each scheme against
 ```bash
 cd backend
 .venv/Scripts/python tests/test_followups.py   # follow-up questions: every conversation ends, nothing asked twice
+.venv/Scripts/python tests/test_robustness.py  # tool/AI failures, JSON schema, injection scrub, rate limit, cache (no AI)
 .venv/Scripts/python ../eval/retrieval_eval.py # document search: right scheme found? (15/15 today)
 .venv/Scripts/python ../eval/run_eval.py       # whole chat on 79 queries with gold answers (~10 min, real AI)
 .venv/Scripts/python ../eval/prompt_baseline.py # one prompt, no agents, 4 prompting strategies (~45 min, real AI)
+.venv/Scripts/python ../eval/injection_test.py  # 14 prompt-injection attacks, incl. poisoned PDFs (~3 min, real AI)
+.venv/Scripts/python ../eval/chunk_experiment.py # chunk sizes 150/300/500 words, recall@k (~10 min)
 ```
 
 Every reply includes a `trace` (steps, timings, AI calls, tokens, tools, errors; no message text). The last 200 are at `GET /api/traces`. Optional LangSmith dashboard: see [Evaluation and tracing](docs/EVALUATION.md#4-tracing-seeing-inside-each-request).
 
 ## Responsible AI
 
-We say "may be eligible", never "you are eligible". We never ask for Aadhaar, bank or phone numbers, and profiles are not stored after the session. Every answer shows its sources, a data-as-of date and an official link, and points to a CSC for help.
+We say "may be eligible", never "you are eligible". We never ask for Aadhaar, bank or phone numbers, and profiles are not stored after the session. Every answer shows its sources, a data-as-of date and an official link, and points to a CSC for help. Answers are checked for outside links, personal numbers and fee requests; the API is rate limited (15 messages/min per user). Details: [Responsible AI](docs/RESPONSIBLE_AI.md).

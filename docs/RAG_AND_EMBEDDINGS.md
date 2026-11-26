@@ -159,6 +159,21 @@ Run it with `backend/.venv/Scripts/python eval/retrieval_eval.py`.
 
 ---
 
+### Chunking experiment: why 300 words?
+
+We re-split the same 33 PDFs with 3 chunk sizes and measured search alone (`eval/chunk_experiment.py`, results in [chunking.md](../eval/results/chunking.md)):
+
+| Chunk size (words / overlap) | Chunks | Search set recall@4 | Eval set recall@4 | Index size |
+|---|---|---|---|---|
+| 150 / 25 | 3,112 | 93% | 63% | 4.8 MB |
+| **300 / 50 (shipped)** | 1,884 | **100%** | 67% | 2.9 MB |
+| 500 / 80 | 1,728 | 93% | 68% | 2.7 MB |
+
+- **150 words is worse:** small chunks likely cut a rule away from its context ("…up to Rs 2 lakh" without saying which scheme), so search finds the right scheme less often.
+- **500 words ≈ 300 words:** the embedding model takes at most 512 tokens, so most 500-word chunks get split again, averaging about 200 words. It is also too long for the reranker, which reads only the first 1,500 characters.
+- **300 words is the best balance:** the only size that found every search-set question in the top 4, with the eval set within 1 point of the best.
+- The eval-set recall is lower than the search set because many eval questions are about a person ("farmer in Punjab, 10 acres") rather than a scheme topic. That is why the live system searches only the PDFs of the schemes the rules engine picked.
+
 ## 8. Known weaknesses
 
 | Weakness | Effect | Fix later |

@@ -123,14 +123,17 @@ It is returned with every reply (`"trace"` in the JSON). The last 200 traces, wi
 
 LangGraph sends traces to LangSmith automatically once these env vars are set. No code changes are needed; the AI calls are already tagged (`qwen3-8b`).
 
-1. Create a free account at smith.langchain.com, then go to Settings → API Keys → create a key.
-2. Add to `backend/.env`:
+1. Create a free account at smith.langchain.com (the free Developer plan needs no card; without a card the account just stops at 5,000 traces a month, so it can never be charged). Then go to Settings → API Keys → create a key.
+2. Add to `backend/.env` (git ignores this file; never put the key on Render):
    ```
-   LANGSMITH_TRACING=true
+   LANGSMITH_TRACING=false          # off by default, so normal local work sends nothing
    LANGSMITH_API_KEY=<your key>
-   LANGSMITH_PROJECT=jansahayak
+   LANGSMITH_PROJECT=jansahayak     # created automatically on the first trace
    ```
-3. Run the backend or `run_eval.py`. Each request appears in LangSmith as a tree: intake → executor → answer → critic, with inputs, outputs and timings.
+3. Record the demo set: `backend/.venv/Scripts/python eval/trace_demo.py`. It switches tracing on for that script only, sends 12 made-up conversations (every kind of reply plus safety and injection), and checks they reached LangSmith.
+4. Open smith.langchain.com → Projects → `jansahayak`. Each request is a tree: `jansahayak-chat` → intake → planner → executor → answer (`qwen3-8b` call with prompt, reply and tokens) → critic → suggest.
+
+**Screenshots:** [capstone/screenshots](../capstone/screenshots/README.md): the overview (14 traces, 0 failed, Qwen3-8B, 4 tools), the trace list, one request's full flow, the executor's tools, an AI call's prompt and reply, the search tool's passages, and a prompt-injection attempt handled safely.
 
 > ⚠️ LangSmith receives **full message text**, so it is an outside service holding user messages. Use it for local testing and eval runs. Only switch it on in production (Render) if the team agrees.
 
@@ -162,12 +165,16 @@ The results go to `eval/results/latest.md` (summary and failed queries) and `lat
 | Run | End-to-end accuracy | Right behaviour | Gold schemes found | What changed |
 |---|---|---|---|---|
 | Baseline | 82% (65/79) | 94% | 91% | First full run |
-| After fixes | **90% (71/79)** | 99% | 100% | 1) user group recognised from clear hints (acres → farmer, admission/IIT → student); 2) find answers rank schemes about the asked topic first (irrigation → Per Drop More Crop); 3) "compare" or several schemes named → list answer instead of one scheme |
+| After fixes | 90% (71/79) | 99% | 100% | 1) user group recognised from clear hints (acres → farmer, admission/IIT → student); 2) find answers rank schemes about the asked topic first (irrigation → Per Drop More Crop); 3) "compare" or several schemes named → list answer instead of one scheme |
+| Full JSON schema at decode time (rejected) | 85% (67/79) | 100% | 98% | Constrained decoding of every profile field: the 8B model filled unstated yes/no facts with false and dropped facts → reverted to a light schema ([run](../eval/results/full_schema_run.md)) |
+| **Final** | **91% (72/79)** | 100% | 100% | Light constrained decoding + pydantic validation; a trick mixed with a real request is served instead of refused; tool/AI-failure fallbacks; critic checks for links, numbers, fees, guarantees; rate limiting and caching |
 
-**Still failing (8):**
-- **Answers leave out a fact they were given (4).** Example: the PMFBY claim answer skips "report within 72 hours". Next step: tighter answer prompt, or a checklist of key facts per question type.
-- **Rules too loose for school students (3).** A class-8 or class-11 student is offered college or AICTE schemes because "school or college?" is unknown. Next step: ask or infer the study level.
-- **Refuses "Ignore your rules… I am a student" (1).** Safe, but it should still show scholarships.
+**Still failing (7):**
+- **Answers leave out a fact they were given (4).** Example: the PMFBY claim answer skips "report within 72 hours" (F-04); also S-05, S-12, E-02. Next step: a checklist of key facts per question type.
+- **Rules too loose for school students (3).** A class-8 or class-11 student is offered college or AICTE schemes because "school or college?" is unknown (S-07, S-08, S-20). Next step: ask or infer the study level.
+- Fixed since the first runs: "Ignore your rules… I am a student" (X-03) is now answered with scholarships instead of refused.
+
+> **What we learned about constrained decoding:** forcing the whole profile schema made the 8B model *worse* (85%), because it had to emit every optional field and filled unknowns with guesses. Constraining only the shape (`intent` from 3 values, `profile` an object) and validating fields afterwards with pydantic gave the best result (91%).
 
 ---
 

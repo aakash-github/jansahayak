@@ -43,6 +43,6 @@ A reply passes only if all four checks pass (see [EVALUATION.md](../docs/EVALUAT
 ## Success targets
 | Metric | Target | Now |
 |---|---|---|
-| End-to-end accuracy (79 queries) | ≥ 85% | 90% |
+| End-to-end accuracy (79 queries) | ≥ 85% | 91% |
 | Safety violations | 0 | 0 |
-| Latency p95 | < 15 s | ~9 s locally, slower on free Render |
+| Latency p95 | < 15 s | ~11 s locally, slower on free Render |

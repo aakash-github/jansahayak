@@ -1,9 +1,12 @@
 """FastAPI backend. Holds the API key + CA cert; the React app only talks to this."""
 import os
 import re
+import time
 import uuid
+from collections import defaultdict, deque
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -19,6 +22,35 @@ app.add_middleware(
 )
 
 SESSIONS: dict[str, dict] = {}  # in-memory, cleared on reset/restart (no PII stored long-term)
+
+# Rate limiting (sliding 60-second window). Protects the shared course key (60 AI requests/min for the
+# whole team) and the free server. 0 turns a limit off (the eval scripts do that).
+RATE_PER_USER = int(os.getenv("RATE_LIMIT_PER_MIN", "15"))       # messages per minute from one user (IP)
+RATE_TOTAL = int(os.getenv("RATE_LIMIT_TOTAL_PER_MIN", "40"))    # messages per minute from everyone together
+_hits: dict[str, deque] = defaultdict(deque)
+LIMIT_MSG = {"en": "You are sending messages too quickly. Please wait a minute and try again.",
+             "hi": "आप बहुत जल्दी-जल्दी संदेश भेज रहे हैं। कृपया एक मिनट रुककर फिर कोशिश करें।"}
+
+
+def _client_ip(request: Request) -> str:
+    fwd = request.headers.get("x-forwarded-for", "")  # Render puts the real user IP here
+    return fwd.split(",")[0].strip() or (request.client.host if request.client else "unknown")
+
+
+def _allow(key: str, limit: int) -> bool:
+    if limit <= 0:
+        return True
+    now = time.time()
+    if len(_hits) > 5000:  # forget users who have been quiet for a minute (keeps memory small)
+        for k in [k for k, d in _hits.items() if not d or now - d[-1] > 60]:
+            del _hits[k]
+    q = _hits[key]
+    while q and now - q[0] > 60:
+        q.popleft()
+    if len(q) >= limit:
+        return False
+    q.append(now)
+    return True
 
 
 class ChatIn(BaseModel):
@@ -54,7 +86,11 @@ def health():
 
 
 @app.post("/api/chat")
-async def chat(body: ChatIn):
+async def chat(body: ChatIn, request: Request):
+    if not _allow("ip:" + _client_ip(request), RATE_PER_USER) or not _allow("all", RATE_TOTAL):
+        lang = SESSIONS.get(body.session_id or "", {}).get("lang", "en")
+        return JSONResponse(status_code=429, headers={"Retry-After": "60"},
+                            content={"detail": LIMIT_MSG[lang], "mode": "rate_limited"})
     sid = body.session_id or str(uuid.uuid4())
     sess = SESSIONS.setdefault(sid, _new_session())
     message = body.message[:1000]
@@ -68,7 +104,9 @@ async def chat(body: ChatIn):
     try:
         out = await GRAPH.ainvoke({"message": message, "profile": sess["profile"], "preset": body.set,
                                    "focus": body.scheme_id, "last_ids": sess["last_ids"],
-                                   "asked": sess["asked"], "lang": sess["lang"], "steps": 0})
+                                   "asked": sess["asked"], "lang": sess["lang"], "steps": 0},
+                                  # names the run in LangSmith (only used when LANGSMITH_TRACING=true)
+                                  config={"run_name": "jansahayak-chat", "metadata": {"lang": sess["lang"]}})
     except Exception as e:
         trace.error("tool_error", f"graph: {type(e).__name__}: {e}")
         return {"session_id": sid, "message": f"Sorry, the AI service is busy right now ({type(e).__name__}). Please try again.",
@@ -115,6 +153,7 @@ def traces(n: int = 50):
         "avg_tool_calls": round(sum(r["tool_calls"] for r in rows) / k, 2),
         "avg_tokens": round(sum(r["tokens_in"] + r["tokens_out"] for r in rows) / k),
         "errors": sum(len(r["errors"]) for r in rows),
+        "cache_hits": sum(r.get("cache_hits", 0) for r in rows),
         "traces": rows[::-1],
     }
 

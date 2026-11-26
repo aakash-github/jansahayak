@@ -6,6 +6,11 @@ export async function sendMessage(session_id, message, set = null, scheme_id = n
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ session_id, message, set, scheme_id }),
   })
+  if (r.status === 429) { // too many messages: show the server's polite message
+    const e = new Error((await r.json().catch(() => ({}))).detail || 'Please wait a minute and try again.')
+    e.userMessage = true
+    throw e
+  }
   if (!r.ok) throw new Error(`Server error ${r.status}`)
   return r.json()
 }
