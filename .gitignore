@@ -14,3 +14,4 @@ backend/data/raw/*
 /*.xlsx
 logs/
 eval/results/.chunk_cache/
+capstone/report/report.html
