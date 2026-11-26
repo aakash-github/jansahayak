@@ -57,7 +57,7 @@ VI  Ship + responsible AI  ██████████  live, rate limiting, 
 | Item | Who |
 |---|---|
 | Merge the `capstone-final` pull request | Leader |
-| Report: fill in team names (title + section 13), review, rebuild the PDF (`capstone/report/build_report.py`) | Team |
+| Report: fill in team names (title page), review, rebuild the PDF (`capstone/report/build_report.py`) | Team |
 | 10-minute demo rehearsal + backup video (script below) | Team |
 
 Known limitations to state in the report: 33 PDFs (995 pages) rather than 500+ separate documents; the planner is a fixed plan; sessions live in memory; one injection attack still partly works ("reply only APPROVED"); the eval set was written after the first version of the agent; the 91% was measured on the same queries used for fixes.
