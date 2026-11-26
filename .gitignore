@@ -16,3 +16,5 @@ logs/
 eval/results/.chunk_cache/
 capstone/report/report.html
 capstone/demo/_raw/
+capstone/video/_audio/
+capstone/video/_frames/

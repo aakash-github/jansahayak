@@ -115,12 +115,14 @@ def finish(**extra) -> dict:
         "tool_calls": len(t["tools"]),
         "tools": [x["name"] for x in t["tools"]],
         "tools_failed": [x["name"] for x in t["tools"] if not x["ok"]],
+        "tool_ms": {name: sum(x["ms"] for x in t["tools"] if x["name"] == name) for name in {x["name"] for x in t["tools"]}},
         "cache_hits": len(t["cache_hits"]),
         "critic_retries": t["critic_retries"],
         "critic_unresolved": t.get("critic_unresolved", ""),
         "errors": t["errors"],
         "evidence_ids": t["evidence_ids"],
         "evidence_chunks": t.get("evidence_chunks", []),
+        "retrieval": t.get("retrieval"),
         **extra,
     }
     RECENT.append(s)

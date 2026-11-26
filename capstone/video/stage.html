@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>JanSahayak explainer stage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&family=Noto+Sans+Devanagari:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="stage.css">
+</head>
+<body>
+<div id="chapter"></div>
+
+<!-- 1. cold open -->
+<section class="scene" id="sc-open">
+  <div class="sun fx" id="o-sun"></div>
+  <svg class="field" id="o-field" viewBox="0 0 1920 430" preserveAspectRatio="none">
+    <path d="M-50 120 C 500 60, 1300 70, 1970 140"/><path d="M-50 180 C 500 120, 1300 130, 1970 205"/>
+    <path d="M-50 245 C 500 185, 1300 195, 1970 275"/><path d="M-50 315 C 500 255, 1300 265, 1970 350"/>
+    <path d="M-50 390 C 500 330, 1300 340, 1970 430"/>
+  </svg>
+  <div class="who">
+    <div class="kicker fx" id="o-kick">A farmer in Uttar Pradesh</div>
+    <div class="big fx" id="o-name" style="margin-top:18px">Ramesh</div>
+    <div class="facts fx" id="o-facts"><span class="chip">🌾 2 acres</span><span class="chip">🎂 40 years</span><span class="chip">💧 needs irrigation</span></div>
+  </div>
+  <div class="helps" id="o-helps"></div>
+  <div class="pile" id="o-pile"></div>
+  <div class="counter fx" id="o-counter">
+    <div class="box"><div class="n accent" id="o-q">5</div><div class="l">schemes he may qualify for</div></div>
+    <div class="box"><div class="n red" id="o-k">0</div><div class="l">he knows about</div></div>
+  </div>
+  <div class="question fx" id="o-question"><div>What if he could simply <span class="accent">ask</span>?</div></div>
+</section>
+
+<!-- 2. title -->
+<section class="scene" id="sc-title">
+  <div class="wrap">
+    <div class="logo fx" id="t-logo">ज</div>
+    <div class="big fx" id="t-name" style="margin-top:34px">Jan<span class="accent">Sahayak</span></div>
+    <div class="lead fx" id="t-lead" style="margin-top:22px;max-width:1300px">Which government schemes may fit you, why, and how to apply.
+      In Hindi and English, for farmers, students and first-time entrepreneurs.</div>
+    <div class="pillars">
+      <div class="pillar fx" id="t-p1"><div class="i">📄</div><div class="t">Grounded</div><div class="d">Every answer cites an official PDF and page</div></div>
+      <div class="pillar fx" id="t-p2"><div class="i">⚖️</div><div class="t">Rule-checked</div><div class="d">Eligibility is decided by code, not guessed by AI</div></div>
+      <div class="pillar fx" id="t-p3"><div class="i">🛡️</div><div class="t">Safe</div><div class="d">IDs never stored, attacks filtered, every reply checked</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. split: live app + x-ray -->
+<section class="scene" id="sc-split">
+  <div class="pane-label" style="left:48px;top:62px"><i>●</i> Citizen view · the live app</div>
+  <div class="device"><iframe id="app" name="app"></iframe><div class="veil" id="veil"><div class="pill" id="veil-txt"></div></div></div>
+  <div class="pane-label" style="left:774px;top:62px"><i>●</i> X-ray · replayed from this request's real trace</div>
+  <div class="xray">
+    <div class="xhead"><span class="badge">X-RAY</span><span class="sub" id="x-sub">waiting for a message…</span><span class="tid" id="x-tid"></span></div>
+    <div class="stats">
+      <div class="stat" id="st-ms"><div class="v">–</div><div class="k">total time</div></div>
+      <div class="stat" id="st-ai"><div class="v">–</div><div class="k">AI calls</div></div>
+      <div class="stat" id="st-tok"><div class="v">–</div><div class="k">tokens</div></div>
+      <div class="stat" id="st-tools"><div class="v">–</div><div class="k">tool calls</div></div>
+      <div class="stat" id="st-cache"><div class="v">–</div><div class="k">cache hits</div></div>
+    </div>
+    <div class="spine" id="spine"><div class="rail"></div><div class="fill" id="spine-fill"></div></div>
+    <div class="detail" id="detail"></div>
+    <div class="timeline"><div class="lbl">Where the time went (this request)</div><div class="bars" id="bars"></div>
+      <div class="ticks" id="ticks"></div></div>
+  </div>
+</section>
+
+<!-- 4. lesson: documents -->
+<section class="scene" id="sc-docs">
+  <div class="lesson">
+    <div class="head"><div class="kicker">Lesson 1</div><div class="h2" style="margin-top:10px" id="docs-h">From 87 PDFs to searchable evidence</div></div>
+    <div class="stage-swap">
+      <div class="panel" id="docs-a">
+        <div class="tiles" id="tiles"></div>
+        <div class="legend" id="legend"></div>
+        <div class="bignums">
+          <div class="bignum" id="bn1"><div class="n">33</div><div class="l">clean, citizen-facing PDFs</div></div>
+          <div class="bignum" id="bn2"><div class="n">995</div><div class="l">pages of official text</div></div>
+          <div class="bignum" id="bn3"><div class="n">1,884</div><div class="l">searchable chunks</div></div>
+        </div>
+      </div>
+      <div class="panel" id="docs-b">
+        <div class="pagebox">
+          <div class="page" id="page"><div class="ph" id="page-h"></div><div id="page-t"></div></div>
+          <div class="meta" id="meta"></div>
+        </div>
+      </div>
+      <div class="panel" id="docs-c">
+        <div class="lead" style="margin-bottom:24px">Search recall@4: is the right scheme in the top 4 results? (15 search questions)</div>
+        <div class="cols3" id="cols3"></div>
+      </div>
+      <div class="panel" id="docs-d">
+        <div class="lead" style="margin-bottom:10px">Right scheme ranked first, out of 15 search questions</div>
+        <div class="hbars" id="abl"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. lesson: small model -->
+<section class="scene" id="sc-model">
+  <div class="lesson">
+    <div class="head"><div class="kicker">Lesson 2</div><div class="h2" style="margin-top:10px" id="model-h">Can one clever prompt do the job?</div></div>
+    <div class="stage-swap">
+      <div class="panel" id="model-a"><div class="lead" style="margin-bottom:26px">Qwen3-8B · the whole 28-scheme catalogue in one prompt · same 79 test queries</div>
+        <div class="strats" id="strats"></div></div>
+      <div class="panel" id="model-b"><div class="failgrid" id="fails"></div></div>
+      <div class="panel" id="model-c">
+        <div class="lead">Forcing the model to fill a strict 17-field form</div>
+        <div class="hbars" id="schema" style="margin-top:30px"></div>
+        <div class="fail in" style="margin-top:40px;border-left-color:var(--amber)"><div class="t">What went wrong</div>
+          <div class="d">It filled in facts nobody had stated (<code>"has_land": false</code>), dropped real ones, and put values
+            in the wrong field. Fix: keep the format simple, and check each field in code.</div></div>
+      </div>
+      <div class="panel" id="model-d">
+        <div class="principle"><div class="h">Code <span class="accent">decides.</span><br>The model <span class="aitxt">reads and writes.</span></div></div>
+        <div class="split2">
+          <div class="side code" id="side-code"><div class="t" style="color:var(--blue)">Code</div><ul>
+            <li>Eligibility, rule by rule</li><li>Reply type and when to ask</li><li>Language of the reply</li><li>Safety checks and the critic</li></ul></div>
+          <div class="side ai" id="side-ai"><div class="t" style="color:var(--ai)">AI · 2 short calls · ~2,000 tokens</div><ul>
+            <li>Read the message into facts</li><li>Explain the result in simple words</li><li>Cite the evidence [S1]–[S4]</li></ul></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. lesson: evaluation -->
+<section class="scene" id="sc-eval">
+  <div class="lesson">
+    <div class="head"><div class="kicker">Lesson 3</div><div class="h2" style="margin-top:10px">Every change, tested on the same 79 questions</div></div>
+    <div class="stage-swap">
+      <div class="panel" id="eval-a"><div class="evalgrid">
+        <div class="ring"><div class="n" id="e79">0</div><div class="lead">gold queries</div><div class="chips" id="emix" style="justify-content:center;margin-top:26px"></div></div>
+        <div class="qcards" id="qcards"></div></div></div>
+      <div class="panel" id="eval-b"><div class="checks4" id="checks4"></div>
+        <div class="labels" id="flabels"><span>Every failure gets exactly one label:</span></div></div>
+      <div class="panel" id="eval-c"><svg class="chart" id="runs" width="1680" height="600"></svg></div>
+      <div class="panel" id="eval-d"><div class="tiles5" id="tiles5"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. observability -->
+<section class="scene" id="sc-obs">
+  <div class="lesson">
+    <div class="head"><div class="kicker">Observability</div><div class="h2" style="margin-top:10px" id="obs-h">Every request leaves a trace</div></div>
+    <div class="stage-swap">
+      <div class="panel" id="obs-a"><div class="avgs" id="avgs"></div><table class="ttable" id="ttable"></table></div>
+      <div class="panel" id="obs-b"><div class="shots">
+        <div class="shot" id="shot1"><img src="../report/img/trace_flow.png"><div class="cap">One request as a LangSmith trace tree</div></div>
+        <div class="shot" id="shot2"><img src="../report/img/overview.png"><div class="cap">Project overview: latency, AI calls, tools</div></div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. close -->
+<section class="scene" id="sc-close">
+  <div class="end">
+    <div class="logo fx" id="c-logo">ज</div>
+    <div class="big fx" id="c-name" style="margin-top:30px">Jan<span class="accent">Sahayak</span></div>
+    <div class="url fx" id="c-url">aakash-github.github.io/jansahayak</div>
+  </div>
+</section>
+
+<div id="subs"></div>
+<script src="stage.js"></script>
+</body>
+</html>
