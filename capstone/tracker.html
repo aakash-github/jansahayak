@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JanSahayak Capstone Tracker</title>
+<style>
+:root {
+  --bg: #f7f7f5; --card: #ffffff; --text: #1d1d1b; --muted: #66665f; --line: #e3e3dd;
+  --done: #1f7a4d; --done-bg: #e3f4ea; --part: #9a6400; --part-bg: #fbf0d9; --todo: #b3261e; --todo-bg: #fbe4e2;
+  --accent: #2456a6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161615; --card: #20201e; --text: #ececE8; --muted: #a3a39b; --line: #34342f;
+    --done: #7fd3a6; --done-bg: #17352a; --part: #f0c46b; --part-bg: #3a2f14; --todo: #f2a29b; --todo-bg: #43201d;
+    --accent: #8cb4f5;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161615; --card: #20201e; --text: #ececE8; --muted: #a3a39b; --line: #34342f;
+  --done: #7fd3a6; --done-bg: #17352a; --part: #f0c46b; --part-bg: #3a2f14; --todo: #f2a29b; --todo-bg: #43201d;
+  --accent: #8cb4f5;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 26px; margin: 0 0 4px; }
+h2 { font-size: 18px; margin: 32px 0 10px; }
+p.sub { color: var(--muted); margin: 0 0 20px; }
+a { color: var(--accent); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 8px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.stat b { display: block; font-size: 24px; }
+.stat span { color: var(--muted); font-size: 13px; }
+.bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; display: flex; margin: 14px 0 6px; }
+.bar i { display: block; height: 100%; }
+.filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 8px; }
+.filters button { border: 1px solid var(--line); background: var(--card); color: var(--text); padding: 6px 12px; border-radius: 999px; cursor: pointer; font: inherit; font-size: 14px; }
+.filters button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+table { width: 100%; border-collapse: collapse; min-width: 720px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 13px; color: var(--muted); font-weight: 600; }
+tr.group td { background: var(--bg); font-weight: 700; }
+tr:last-child td { border-bottom: 0; }
+.chip { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.done { color: var(--done); background: var(--done-bg); }
+.partial { color: var(--part); background: var(--part-bg); }
+.todo { color: var(--todo); background: var(--todo-bg); }
+td.ev a { display: inline-block; margin-right: 8px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.card h3 { margin: 0 0 6px; font-size: 15px; }
+.card p { margin: 0; color: var(--muted); font-size: 14px; }
+code, pre { font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+pre { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; overflow-x: auto; margin: 0; }
+ul.check { list-style: none; padding: 0; margin: 0; }
+ul.check li { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; }
+ul.check input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
+ul.check small { display: block; color: var(--muted); }
+.who { font-size: 12px; font-weight: 700; color: var(--accent); }
+footer { color: var(--muted); font-size: 13px; margin-top: 32px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>JanSahayak: Capstone tracker</h1>
+  <p class="sub">Track B · every item from the brief, its status, and the file that proves it. Status as of 26 Nov 2026 (branch <code>capstone-final</code>).</p>
+
+  <div class="stats" id="stats"></div>
+  <div class="bar" id="bar" aria-hidden="true"></div>
+
+  <h2>Key numbers</h2>
+  <div class="cards">
+    <div class="card"><h3>91% end-to-end accuracy</h3><p>79-query gold eval set, real Qwen3-8B (first run: 82%)</p></div>
+    <div class="card"><h3>76% best single prompt</h3><p>4 prompting strategies without agents: the agent design adds 15 points</p></div>
+    <div class="card"><h3>13/14 injection attacks blocked</h3><p>10 in the chat + 4 poisoned documents (9/14 before the extra defences)</p></div>
+    <div class="card"><h3>0 safety violations</h3><p>No "you are eligible", no personal numbers repeated</p></div>
+    <div class="card"><h3>2 AI calls per message</h3><p>Everything that decides is code; ~2,000 tokens per query</p></div>
+    <div class="card"><h3>300-word chunks win</h3><p>Search recall@4: 150 words 93%, 300 words 100%, 500 words 93%</p></div>
+  </div>
+
+  <h2>Brief checklist</h2>
+  <div class="filters" role="group" aria-label="Filter">
+    <button data-f="all" aria-pressed="true">All</button>
+    <button data-f="done" aria-pressed="false">Done</button>
+    <button data-f="partial" aria-pressed="false">Partial</button>
+    <button data-f="todo" aria-pressed="false">To do</button>
+  </div>
+  <div class="wrap"><table>
+    <thead><tr><th style="width:26%">Brief asks for</th><th style="width:9%">Status</th><th>What we have</th><th style="width:22%">Evidence</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table></div>
+
+  <h2>Left for the team</h2>
+  <p class="sub">Tick items as you finish them (ticks are saved in your browser only).</p>
+  <ul class="check" id="left"></ul>
+
+  <h2>Run everything</h2>
+  <pre>cd backend
+.venv/Scripts/python tests/test_followups.py        # follow-up logic (no AI)
+.venv/Scripts/python tests/test_robustness.py       # tool failures, schema, injection scrub, rate limit, cache (no AI)
+cd ..
+backend/.venv/Scripts/python eval/run_eval.py         # 79 queries, end-to-end accuracy (~10 min, real AI)
+backend/.venv/Scripts/python eval/injection_test.py   # 14 prompt-injection attacks (~3 min, real AI)
+backend/.venv/Scripts/python eval/retrieval_eval.py   # search layers, recall (~1 min)
+backend/.venv/Scripts/python eval/chunk_experiment.py # chunk sizes 150/300/500 (~10 min)
+backend/.venv/Scripts/python eval/prompt_baseline.py  # one prompt vs agents, 4 strategies (~45 min, real AI)</pre>
+
+  <h2>Where to start reading</h2>
+  <div class="cards" id="docs"></div>
+
+  <footer>Repo: <a href="https://github.com/aakash-github/jansahayak">github.com/aakash-github/jansahayak</a> · Live app: <a href="https://aakash-github.github.io/jansahayak/">aakash-github.github.io/jansahayak</a></footer>
+</main>
+<script>
+const GH = 'https://github.com/aakash-github/jansahayak/blob/main/';
+const L = (label, path) => `<a href="${path.startsWith('http') ? path : GH + path}" target="_blank" rel="noopener">${label}</a>`;
+const ITEMS = [
+  ['I. Task decomposition', [
+    ['Written spec: what it does, refuses, what is correct', 'done', 'One-page spec', [L('SPEC.md', 'capstone/SPEC.md')]],
+    ['Eval set: 60–100 realistic queries with gold answers', 'done', '79 queries: find, focus, multi-turn, ask, refuse, safety; 7 in Hindi', [L('eval_set.csv', 'eval/eval_set.csv')]],
+    ['Eval set frozen and baseline recorded before agent code', 'partial', 'Set frozen and 82% baseline recorded before eval-driven fixes. Git history shows the agent code came first, so say this honestly.', [L('baseline.md', 'eval/results/baseline.md')]],
+  ]],
+  ['II. Prompt engineering baseline', [
+    ['Single-agent, single-prompt attempt', 'done', 'Whole catalogue in one prompt, no tools', [L('prompt_baseline.py', 'eval/prompt_baseline.py')]],
+    ['≥3 prompting strategies compared', 'done', 'Zero-shot 73%, few-shot 72%, chain-of-thought 65%, decomposition 76% (agent system 91%)', [L('prompting.md', 'eval/results/prompting.md')]],
+    ['Document how the small model breaks', 'done', 'Wrong language, eligibility maths, guessing instead of asking, CoT hurts, bad JSON, 3× tokens', [L('EVALUATION.md §7', 'docs/EVALUATION.md#7-prompting-baseline-one-prompt-vs-the-agent-system')]],
+  ]],
+  ['III. RAG over a real corpus', [
+    ['500–2,000 documents', 'partial', '33 official PDFs = 995 pages = 1,884 chunks. State it as pages and chunks, openly.', [L('RAG doc', 'docs/RAG_AND_EMBEDDINGS.md')]],
+    ['Chunking experiments', 'done', '150 / 300 / 500-word chunks compared on recall@1/4/10', [L('chunking.md', 'eval/results/chunking.md'), L('script', 'eval/chunk_experiment.py')]],
+    ['Hybrid retrieval (BM25 + dense)', 'done', 'BM25 + bge-small embeddings, fused with RRF', [L('retrieval.py', 'backend/app/retrieval.py')]],
+    ['Reranker', 'done', 'MiniLM cross-encoder on the top 12', [L('retrieval_eval.py', 'eval/retrieval_eval.py')]],
+    ['Citation-grounded answers', 'done', '[S1]–[S4] in answers, linked to PDF and page', [L('HOW_IT_WORKS', 'docs/HOW_IT_WORKS_SIMPLIFIED.md')]],
+    ['Recall@k measured separately', 'done', 'recall@4 / @10 in every eval run, plus the search-only eval', [L('latest.md', 'eval/results/latest.md')]],
+  ]],
+  ['IV. Agentic layer', [
+    ['≥3 tools', 'done', 'Eligibility rules, document search, document checklist, official links', [L('agents.py', 'backend/app/agents.py')]],
+    ['Planner → executor → critic loop', 'done', 'LangGraph; the planner is a fixed plan (a deliberate choice for an 8B model); the critic sends answers back', [L('simplified', 'docs/HOW_IT_WORKS_SIMPLIFIED.md')]],
+    ['Persistent state across turns', 'done', 'Session memory: profile, questions asked, last cards (in memory, cleared on reset)', [L('main.py', 'backend/app/main.py')]],
+    ['Tool failure handling', 'done', 'Each tool fails on its own; AI down → keyword intake + plain summary', [L('test_robustness.py', 'backend/tests/test_robustness.py')]],
+    ['Malformed JSON: constrained decoding, schema validation, retry', 'done', 'json_schema decoding on the course endpoint + pydantic field check + 2 retries', [L('schemas.py', 'backend/app/schemas.py'), L('llm.py', 'backend/app/llm.py')]],
+    ['Infinite loops / token caps', 'done', 'At most 10 steps per message; max_tokens ≤ 1024', [L('agents.py', 'backend/app/agents.py')]],
+  ]],
+  ['V. Evaluation and observability', [
+    ['End-to-end accuracy, completion, tool calls, cost, latency', 'done', '91%, 100% completion, ~8.4 tool calls, ~2,000 tokens, p50 5.5 s / p95 10.7 s', [L('latest.md', 'eval/results/latest.md')]],
+    ['Failure taxonomy (retrieval / reasoning / tool / hallucination)', 'done', 'One label per failed query', [L('EVALUATION.md', 'docs/EVALUATION.md')]],
+    ['Tracing via LangSmith / Langfuse / OTel', 'partial', 'Built-in traces on every reply + /api/traces; LangSmith project jansahayak with 14 demo traces (tokens, steps, AI calls)', [L('trace.py', 'backend/app/trace.py')]],
+  ]],
+  ['VI. Ship it', [
+    ['React front-end', 'done', 'Voice, Hindi, scheme cards, tap-to-answer buttons; live on GitHub Pages', [L('live app', 'https://aakash-github.github.io/jansahayak/')]],
+    ['Containerised', 'done', 'Docker on Render', [L('render.yaml', 'render.yaml')]],
+    ['Rate limiting', 'done', '15 msgs/min per user, 40/min total, polite 429 message', [L('main.py', 'backend/app/main.py')]],
+    ['Caching', 'done', 'AI reply cache (300, 1 h) + embedding cache (500 questions)', [L('llm.py', 'backend/app/llm.py')]],
+    ['Prompt-injection tests against the corpus', 'done', '14 attacks (10 in chat, 4 poisoned PDFs): 13/14 blocked', [L('injection.md', 'eval/results/injection.md')]],
+    ['PII handling, refusals', 'done', 'Never asked, no field to store, scrubbed from answers, not in traces', [L('RESPONSIBLE_AI.md', 'docs/RESPONSIBLE_AI.md')]],
+    ['Human-in-the-loop boundary stated', 'done', 'Bot informs; citizen / CSC / department decide and act', [L('RESPONSIBLE_AI §6', 'docs/RESPONSIBLE_AI.md#6-human-in-the-loop-boundary')]],
+  ]],
+  ['Deliverables', [
+    ['Git repository with the full stack', 'done', 'Entry point: capstone/README.md', [L('capstone/', 'capstone/README.md')]],
+    ['Trace dashboard with real queries', 'partial', 'LangSmith dashboard recorded (eval/trace_demo.py); screenshots for the report still to take', [L('how', 'docs/EVALUATION.md#4-tracing-seeing-inside-each-request')]],
+    ['Evaluation report incl. failure taxonomy', 'done', 'Eval guide + result files', [L('EVALUATION.md', 'docs/EVALUATION.md')]],
+    ['12-page technical report', 'todo', 'Outline in capstone/README.md', [L('outline', 'capstone/README.md#12-page-report-outline')]],
+    ['10-minute live demo', 'todo', 'Script in capstone/README.md', [L('demo script', 'capstone/README.md#10-minute-demo-script')]],
+  ]],
+];
+const LEFT = [
+  ['langsmith', 'LangSmith: create a free key, run 10 queries, take 3 screenshots', 'Traces are already in project jansahayak. Take 4 screenshots (run list, one trace tree, an AI call, Monitor tab). Free plan, no card.', 'You'],
+  ['merge', 'Review and merge the capstone-final pull request', 'Then Render and GitHub Pages redeploy by themselves.', 'Leader'],
+  ['report', 'Write the 12-page report', 'Outline + where to copy each section from: capstone/README.md', 'Team'],
+  ['demo', 'Rehearse the 10-minute demo and record a backup video', 'Wake Render 5 minutes before (free tier sleeps).', 'Team'],
+  ['keys', 'Ask the coordinator for new API keys after submission', 'The keys were used in local testing; the Track B guide says to rotate them if exposed.', 'Leader'],
+];
+const label = { done: 'Done', partial: 'Partial', todo: 'To do' };
+function render(filter) {
+  let html = '';
+  for (const [group, rows] of ITEMS) {
+    const shown = rows.filter(r => filter === 'all' || r[1] === filter);
+    if (!shown.length) continue;
+    html += `<tr class="group"><td colspan="4">${group}</td></tr>`;
+    for (const [what, st, have, ev] of shown)
+      html += `<tr><td>${what}</td><td><span class="chip ${st}">${label[st]}</span></td><td>${have}</td><td class="ev">${ev.join('')}</td></tr>`;
+  }
+  document.getElementById('rows').innerHTML = html;
+}
+const all = ITEMS.flatMap(([, r]) => r);
+const count = s => all.filter(r => r[1] === s).length;
+document.getElementById('stats').innerHTML =
+  `<div class="stat"><b>${all.length}</b><span>items in the brief</span></div>` +
+  `<div class="stat"><b style="color:var(--done)">${count('done')}</b><span>done</span></div>` +
+  `<div class="stat"><b style="color:var(--part)">${count('partial')}</b><span>partial</span></div>` +
+  `<div class="stat"><b style="color:var(--todo)">${count('todo')}</b><span>to do (team)</span></div>`;
+document.getElementById('bar').innerHTML = ['done', 'partial', 'todo']
+  .map(s => `<i style="width:${100 * count(s) / all.length}%;background:var(--${s === 'partial' ? 'part' : s})"></i>`).join('');
+document.querySelectorAll('.filters button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.filters button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  render(b.dataset.f);
+}));
+render('all');
+let ticks = {};
+try { ticks = JSON.parse(localStorage.getItem('js-capstone-ticks') || '{}'); } catch (e) { ticks = {}; }
+document.getElementById('left').innerHTML = LEFT.map(([id, t, d, who]) =>
+  `<li><input type="checkbox" id="c-${id}" ${ticks[id] ? 'checked' : ''}><label for="c-${id}"><span class="who">${who}</span> · ${t}<small>${d}</small></label></li>`).join('');
+document.querySelectorAll('#left input').forEach(cb => cb.addEventListener('change', () => {
+  ticks[cb.id.slice(2)] = cb.checked;
+  try { localStorage.setItem('js-capstone-ticks', JSON.stringify(ticks)); } catch (e) { /* private mode */ }
+}));
+const DOCS = [
+  ['Capstone map', 'Brief → what we built → where', 'capstone/README.md'],
+  ['How it works (simplified)', 'The whole bot on one page of diagrams', 'docs/HOW_IT_WORKS_SIMPLIFIED.md'],
+  ['Evaluation', 'Test set, metrics, failure types, tracing, prompting baseline', 'docs/EVALUATION.md'],
+  ['RAG and embeddings', 'How PDFs are searched, chunking, how to add one', 'docs/RAG_AND_EMBEDDINGS.md'],
+  ['Responsible AI', 'Injection, PII, refusals, human-in-the-loop, rate limits, caching', 'docs/RESPONSIBLE_AI.md'],
+  ['Spec', 'One page: does / refuses / correct', 'capstone/SPEC.md'],
+];
+document.getElementById('docs').innerHTML = DOCS.map(([t, d, p]) =>
+  `<div class="card"><h3>${L(t, p)}</h3><p>${d}</p></div>`).join('');
+</script>
+</body>
+</html>
