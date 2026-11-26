@@ -4,6 +4,7 @@ This folder is the **starting point for reviewers and the team**. It maps each p
 
 - **Live app:** https://aakash-github.github.io/jansahayak/
 - **Tracker page (open in a browser):** [tracker.html](tracker.html): every brief item, its status and evidence, plus the team's remaining tasks
+- **Technical report (draft, 10 pages):** [JanSahayak_Report.pdf](report/JanSahayak_Report.pdf) · source [REPORT.md](report/REPORT.md)
 - **Start here to understand the system:** [How it works (simplified)](../docs/HOW_IT_WORKS_SIMPLIFIED.md): every piece on one page, with diagrams
 
 ---
@@ -56,7 +57,7 @@ VI  Ship + responsible AI  ██████████  live, rate limiting, 
 | Item | Who |
 |---|---|
 | Merge the `capstone-final` pull request | Leader |
-| 12-page report (outline below) | Team |
+| Report: fill in team names (title + section 13), review, rebuild the PDF (`capstone/report/build_report.py`) | Team |
 | 10-minute demo rehearsal + backup video (script below) | Team |
 
 Known limitations to state in the report: 33 PDFs (995 pages) rather than 500+ separate documents; the planner is a fixed plan; sessions live in memory; one injection attack still partly works ("reply only APPROVED"); the eval set was written after the first version of the agent; the 91% was measured on the same queries used for fixes.
@@ -64,6 +65,8 @@ Known limitations to state in the report: 33 PDFs (995 pages) rather than 500+ s
 ---
 
 ## 12-page report outline
+
+The draft following this outline is in [report/](report/REPORT.md).
 
 | Pages | Section | Copy from |
 |---|---|---|
@@ -99,6 +102,7 @@ Known limitations to state in the report: 33 PDFs (995 pages) rather than 500+ s
 
 | Doc | For |
 |---|---|
+| [report/](report/REPORT.md) | Technical report: Markdown source, PDF, build script |
 | [tracker.html](tracker.html) | Status of every brief item, in one page |
 | [screenshots/](screenshots/README.md) | LangSmith trace dashboard: 8 screenshots with captions |
 | [HOW_IT_WORKS_SIMPLIFIED.md](../docs/HOW_IT_WORKS_SIMPLIFIED.md) | Everyone: the system in diagrams |

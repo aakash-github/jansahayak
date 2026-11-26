@@ -161,13 +161,13 @@ const ITEMS = [
     ['Git repository with the full stack', 'done', 'Entry point: capstone/README.md', [L('capstone/', 'capstone/README.md')]],
     ['Trace dashboard with real queries', 'done', 'LangSmith project jansahayak-capstone: 8 screenshots (overview, trace list, full flow, tools, AI call, search, injection)', [L('screenshots', 'capstone/screenshots/README.md')]],
     ['Evaluation report incl. failure taxonomy', 'done', 'Eval guide + result files', [L('EVALUATION.md', 'docs/EVALUATION.md')]],
-    ['12-page technical report', 'todo', 'Outline in capstone/README.md', [L('outline', 'capstone/README.md#12-page-report-outline')]],
+    ['12-page technical report', 'partial', 'Draft ready (10 pages, A4 PDF): add team names and review', [L('PDF', 'capstone/report/JanSahayak_Report.pdf'), L('source', 'capstone/report/REPORT.md')]],
     ['10-minute live demo', 'todo', 'Script in capstone/README.md', [L('demo script', 'capstone/README.md#10-minute-demo-script')]],
   ]],
 ];
 const LEFT = [
   ['merge', 'Review and merge the capstone-final pull request', 'Then Render and GitHub Pages redeploy by themselves.', 'Leader'],
-  ['report', 'Write the 12-page report', 'Outline + where to copy each section from: capstone/README.md', 'Team'],
+  ['report', 'Finish the report: add team names (title + section 13), review, rebuild the PDF', 'Draft: capstone/report/REPORT.md → backend/.venv/Scripts/python capstone/report/build_report.py', 'Team'],
   ['demo', 'Rehearse the 10-minute demo and record a backup video', 'Wake Render 5 minutes before (free tier sleeps).', 'Team'],
   ['keys', 'Ask the coordinator for new API keys after submission', 'The keys were used in local testing; the Track B guide says to rotate them if exposed.', 'Leader'],
 ];
