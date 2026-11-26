@@ -8,6 +8,8 @@ from pathlib import Path
 
 from rank_bm25 import BM25Okapi
 
+from . import trace
+
 DATA = Path(__file__).parent.parent / "data"
 CHUNKS = json.loads((DATA / "chunks.json").read_text(encoding="utf-8")) if (DATA / "chunks.json").exists() else []
 _bm25 = BM25Okapi([c["text"].lower().split() for c in CHUNKS]) if CHUNKS else None
@@ -47,9 +49,14 @@ def search(query: str, scheme_ids: list[str] | None = None, k: int = 4) -> list[
             rankings.append(sorted(allowed, key=lambda i: -sims[i])[:20])
         except Exception as e:  # dense search is a bonus; BM25 still works
             print("dense search skipped:", e)
-    cand = _rrf(rankings)[:12]
+    cand = fused = _rrf(rankings)[:12]
     if _reranker is not None and cand:
         # small batches + first ~1500 chars of each chunk: scoring 12 full chunks at once used ~270 MB
         scores = list(_reranker.rerank(query, [CHUNKS[i]["text"][:1500] for i in cand], batch_size=2))
         cand = [i for _, i in sorted(zip(scores, cand), reverse=True)]
+    # chunk IDs at each stage (no text), so a trace shows how fusion and reranking changed the order
+    trace.put("retrieval", {"pool": len(allowed), "bm25": [CHUNKS[i]["id"] for i in rankings[0]],
+                            "dense": [CHUNKS[i]["id"] for i in rankings[1]] if len(rankings) > 1 else [],
+                            "fused": [CHUNKS[i]["id"] for i in fused],
+                            "reranked": [CHUNKS[i]["id"] for i in cand]})
     return [CHUNKS[i] for i in cand[:k]]

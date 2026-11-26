@@ -1,0 +1,6 @@
+# Extra packages for the explainer video, installed into the backend venv:
+#   backend/.venv/Scripts/pip install -r capstone/video/requirements.txt
+#   backend/.venv/Scripts/python -m playwright install ffmpeg
+playwright
+imageio-ffmpeg
+edge-tts
