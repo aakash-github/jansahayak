@@ -1,7 +1,7 @@
 # Backup demo video
 
 `record_demo.py` drives the real app in Edge with Playwright, adds a caption bar per scene, and saves
-`JanSahayak_demo.mp4` (1280x720, about 5-6 min) here. The video is git-ignored; share it by drive link.
+`JanSahayak_demo.mp4` (1280x720, about 5 min) here.
 
 ```bash
 # 1. backend (fast local replies, no rate limit, no tracing)

@@ -3,7 +3,7 @@
 Run the backend and frontend locally first (see capstone/demo/README.md), then:
     backend/.venv/Scripts/python capstone/demo/record_demo.py [--app http://localhost:5173]
 
-Output: capstone/demo/JanSahayak_demo.mp4 (git-ignored).
+Output: capstone/demo/JanSahayak_demo.mp4.
 """
 import argparse
 import base64
@@ -143,7 +143,7 @@ def run(app, out_mp4):
         # 2. Live app
         page.goto(app)
         page.wait_for_load_state("networkidle")
-        cap(page, "<b>LIVE</b> The real app, running locally")
+        cap(page, "<b>LIVE</b> The real JanSahayak app")
         page.wait_for_timeout(4000)
 
         cap(page, "<b>1</b> A farmer asks in plain English")
