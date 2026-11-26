@@ -14,6 +14,8 @@ import httpx
 import numpy as np
 from dotenv import load_dotenv
 
+from . import trace
+
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 BASE_URL = os.getenv("EMBED_BASE_URL", "")          # https://103.42.50.41:1035/v1
@@ -56,8 +58,24 @@ def _local_embed(texts: list[str]) -> np.ndarray:
     return np.array(list(_local.embed(texts)), dtype=np.float32)
 
 
+_query_cache: dict[str, np.ndarray] = {}  # search questions already embedded (same question -> no API call)
+
+
 def embed(texts: list[str], timeout: float = 10) -> np.ndarray:
-    """Embed texts; API first, local model if the API is not configured or fails."""
+    """Embed texts; API first, local model if the API is not configured or fails.
+    Single texts (search questions) are cached, up to 500."""
+    if len(texts) == 1 and texts[0] in _query_cache:
+        trace.cache_hit("embed")
+        return _query_cache[texts[0]][None, :]
+    v = _embed(texts, timeout)
+    if len(texts) == 1:
+        if len(_query_cache) >= 500:
+            _query_cache.pop(next(iter(_query_cache)))
+        _query_cache[texts[0]] = v[0]
+    return v
+
+
+def _embed(texts: list[str], timeout: float) -> np.ndarray:
     global last_source
     if BASE_URL and API_KEY:
         try:

@@ -4,6 +4,7 @@ For every request we record:
   - each graph step (node) and how long it took
   - each AI call: time, tokens in/out, retries, bad-JSON replies
   - each tool call: eligibility, search, documents, links
+  - cache hits (answers reused instead of a new AI or embedding call)
   - errors, critic problems, and which schemes the evidence came from
 
 The summary is returned with every chat reply ("trace"), kept in memory for GET /api/traces,
@@ -29,7 +30,7 @@ _current: ContextVar[dict | None] = ContextVar("trace", default=None)
 
 def start() -> dict:
     t = {"id": uuid.uuid4().hex[:12], "t0": time.perf_counter(), "nodes": [], "llm": [], "tools": [],
-         "errors": [], "critic_retries": 0, "evidence_ids": []}
+         "errors": [], "critic_retries": 0, "evidence_ids": [], "cache_hits": []}
     _current.set(t)
     return t
 
@@ -79,8 +80,13 @@ def llm_call(ms: float, tokens_in: int, tokens_out: int, retries: int):
     _add("llm", {"ms": round(ms), "in": tokens_in, "out": tokens_out, "retries": retries})
 
 
+def cache_hit(kind: str):
+    """An answer came from the cache instead of a new call (kind: llm | embed)."""
+    _add("cache_hits", {"kind": kind})
+
+
 def error(kind: str, detail: str = ""):
-    """kind: tool_error | malformed_json | json_gave_up | llm_error"""
+    """kind: tool_error | malformed_json | json_gave_up | llm_error | schema_invalid"""
     _add("errors", {"kind": kind, "detail": detail[:200]})
 
 
@@ -108,6 +114,8 @@ def finish(**extra) -> dict:
         "llm_retries": sum(c["retries"] for c in t["llm"]),
         "tool_calls": len(t["tools"]),
         "tools": [x["name"] for x in t["tools"]],
+        "tools_failed": [x["name"] for x in t["tools"] if not x["ok"]],
+        "cache_hits": len(t["cache_hits"]),
         "critic_retries": t["critic_retries"],
         "critic_unresolved": t.get("critic_unresolved", ""),
         "errors": t["errors"],
