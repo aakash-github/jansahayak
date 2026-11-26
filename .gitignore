@@ -15,3 +15,7 @@ backend/data/raw/*
 logs/
 eval/results/.chunk_cache/
 capstone/report/report.html
+# demo recordings (large, shared outside git)
+capstone/demo/*.mp4
+capstone/demo/*.webm
+capstone/demo/_raw/
