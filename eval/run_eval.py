@@ -23,6 +23,7 @@ Run from the repo root (takes ~10 minutes with the real model):
 Writes eval/results/latest.csv (one row per query) and eval/results/latest.md (summary).
 """
 import csv
+import os
 import re
 import statistics
 import sys
@@ -32,6 +33,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT.parent / "backend"))
+# measure every query fresh: no rate limit, no reused AI replies
+os.environ.setdefault("RATE_LIMIT_PER_MIN", "0")
+os.environ.setdefault("RATE_LIMIT_TOTAL_PER_MIN", "0")
+os.environ.setdefault("LLM_CACHE_SIZE", "0")
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app import eligibility, retrieval  # noqa: E402

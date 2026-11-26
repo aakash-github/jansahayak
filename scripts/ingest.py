@@ -49,7 +49,8 @@ def split(text: str) -> list[str]:
     return [p for piece in pieces for p in _fit(piece)]
 
 
-def main():
+def build_chunks() -> list[dict]:
+    """Read every PDF in data/raw and split it into chunks (uses CHUNK_WORDS / OVERLAP)."""
     schemes = {s["scheme_id"]: s for s in json.loads((DATA / "schemes.json").read_text(encoding="utf-8"))}
     # file name -> its entry in sources.json (for the exact PDF link and a readable title)
     from download_pdfs import file_name
@@ -84,6 +85,11 @@ def main():
                                "text": f"{s['scheme_name']} {section}: {text}", "source_url": s["source_url"]})
     for i, c in enumerate(chunks):
         c["id"] = i
+    return chunks
+
+
+def main():
+    chunks = build_chunks()
     (DATA / "chunks.json").write_text(json.dumps(chunks, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"{len(chunks)} chunks written")
     try:
