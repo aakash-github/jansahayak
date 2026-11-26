@@ -55,7 +55,7 @@ VI  Ship + responsible AI  ██████████  live, rate limiting, 
 
 | Item | Who |
 |---|---|
-| LangSmith dashboard screenshots: traces are already recorded in project `jansahayak` (re-record: `eval/trace_demo.py`) | Project owner |
+| LangSmith dashboard screenshots: traces are already recorded in project `jansahayak-capstone` (re-record: `eval/trace_demo.py`) | Project owner |
 | Merge the `capstone-final` pull request | Leader |
 | 12-page report (outline below) | Team |
 | 10-minute demo rehearsal + backup video (script below) | Team |

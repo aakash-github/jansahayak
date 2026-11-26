@@ -265,7 +265,8 @@ def _safe(name: str, fn, default):
     so one broken tool (e.g. search down) does not sink the whole reply."""
     try:
         with trace.tool(name):
-            return fn()
+            # also shown as a tool call in LangSmith when LANGSMITH_TRACING=true (no-op otherwise)
+            return llm.traceable(run_type="tool", name=name)(fn)()
     except Exception as e:  # noqa: BLE001
         print(f"tool {name} failed:", type(e).__name__, e)
         return default

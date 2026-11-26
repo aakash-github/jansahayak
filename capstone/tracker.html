@@ -146,7 +146,7 @@ const ITEMS = [
   ['V. Evaluation and observability', [
     ['End-to-end accuracy, completion, tool calls, cost, latency', 'done', '91%, 100% completion, ~8.4 tool calls, ~2,000 tokens, p50 5.5 s / p95 10.7 s', [L('latest.md', 'eval/results/latest.md')]],
     ['Failure taxonomy (retrieval / reasoning / tool / hallucination)', 'done', 'One label per failed query', [L('EVALUATION.md', 'docs/EVALUATION.md')]],
-    ['Tracing via LangSmith / Langfuse / OTel', 'partial', 'Built-in traces on every reply + /api/traces; LangSmith project jansahayak with 14 demo traces (tokens, steps, AI calls)', [L('trace.py', 'backend/app/trace.py')]],
+    ['Tracing via LangSmith / Langfuse / OTel', 'partial', 'Built-in traces on every reply + /api/traces; LangSmith project jansahayak-capstone: 14 demo traces, 25 AI calls, 108 tool calls, tokens', [L('trace.py', 'backend/app/trace.py')]],
   ]],
   ['VI. Ship it', [
     ['React front-end', 'done', 'Voice, Hindi, scheme cards, tap-to-answer buttons; live on GitHub Pages', [L('live app', 'https://aakash-github.github.io/jansahayak/')]],
@@ -166,7 +166,7 @@ const ITEMS = [
   ]],
 ];
 const LEFT = [
-  ['langsmith', 'LangSmith: create a free key, run 10 queries, take 3 screenshots', 'Traces are already in project jansahayak. Take 4 screenshots (run list, one trace tree, an AI call, Monitor tab). Free plan, no card.', 'You'],
+  ['langsmith', 'LangSmith: create a free key, run 10 queries, take 3 screenshots', 'Traces are already in project jansahayak-capstone. Take 4 screenshots (run list, one trace tree, an AI call, Monitor tab). Free plan, no card.', 'You'],
   ['merge', 'Review and merge the capstone-final pull request', 'Then Render and GitHub Pages redeploy by themselves.', 'Leader'],
   ['report', 'Write the 12-page report', 'Outline + where to copy each section from: capstone/README.md', 'Team'],
   ['demo', 'Rehearse the 10-minute demo and record a backup video', 'Wake Render 5 minutes before (free tier sleeps).', 'Team'],
