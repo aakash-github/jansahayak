@@ -53,7 +53,8 @@ Only two steps use the AI: **reading** the message (①) and **writing** the rep
 - The AI also gets the profile so far and the last question asked, so a reply like "yes" or "30" makes sense.
 - It can only fill known fields (occupation, state, age, income, category, gender, course…). Anything else is dropped.
 - It is told to never record Aadhaar, bank or phone numbers, and to ignore text that tries to change its instructions.
-- If the JSON is bad, we ask again (up to 2 retries).
+- **Constrained decoding:** the AI server is given a JSON schema, so the reply must be an object with one of the 3 allowed intents and a profile. Each profile field is then checked (pydantic): an age of 500 or an unknown category is dropped, the rest is kept. (Forcing every field at decode time made the 8B model worse, so we only force the shape.)
+- If the JSON is still bad, we ask again (up to 2 retries). If the AI is down, keyword rules read the message instead.
 
 **3) Safety nets in code, for when the small model slips**
 ```
@@ -161,11 +162,16 @@ The AI **cannot** change who is eligible. It only explains what the rules engine
 `critic()`
 ```
  Does the reply name a scheme that is NOT on the cards?   ──► "remove it"
- Does it say "you are eligible" / "आप पात्र हैं"?          ──► "say may be eligible"
+ Does it say "you are eligible" / "आप पात्र हैं" / "guaranteed"? ──► "say may be eligible"
+ Does it ask for a fee, or to send Aadhaar on WhatsApp?   ──► "remove it"
+ A list answer that names no scheme ("APPROVED")?         ──► "name the schemes"
+ Outside links, UPI IDs, phone / Aadhaar numbers?         ──► removed directly
         │
    problem? ──► back to ⑤ with the notes (at most 10 steps in total)
+   still broken at the last step? ──► safe plain summary of the cards
    OK?      ──► ⑦
 ```
+These checks are what stop prompt-injection attacks, including ones hidden inside PDFs. See [Responsible AI](RESPONSIBLE_AI.md).
 
 ---
 
@@ -211,4 +217,4 @@ Memory is held on the server only, never in a database. It is cleared on **Reset
 | ⑥ Critic | ⚙️ code | Catches the AI's mistakes |
 | ⑦ Follow-up | ⚙️ code | Picks the most useful question by counting |
 
-This split is why the full system passes **90%** of our test questions, while one big prompt doing everything passes 65–76%. See [Evaluation](EVALUATION.md#7-prompting-baseline-one-prompt-vs-the-agent-system).
+This split is why the full system passes **91%** of our test questions, while one big prompt doing everything passes 65–76%. See [Evaluation](EVALUATION.md#7-prompting-baseline-one-prompt-vs-the-agent-system).
